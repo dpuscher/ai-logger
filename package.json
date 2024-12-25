@@ -1,0 +1,26 @@
+{
+  "name": "ai-cache-log",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "format": "prettier --write ."
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "inquirer": "^12.3.0",
+    "openai": "^4.77.0",
+    "puppeteer": "^23.11.1",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "ts-node": "^10.9.2"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2"
+  }
+}
