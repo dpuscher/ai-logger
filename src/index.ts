@@ -1,26 +1,26 @@
 #!/usr/bin/env ts-node
 
-import 'dotenv/config.js';
-import fs from 'fs';
-import inquirer from 'inquirer';
-import OpenAI from 'openai';
-import path from 'path';
-import puppeteer from 'puppeteer-extra';
-import StealthPlugin from 'puppeteer-extra-plugin-stealth';
-import { fileURLToPath } from 'url';
+import "dotenv/config.js";
+import fs from "fs";
+import inquirer from "inquirer";
+import OpenAI from "openai";
+import path from "path";
+import puppeteer from "puppeteer-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
+import { fileURLToPath } from "url";
 
 // TypeScript import for Node's "URL" or "fileURLToPath" usage:
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const cookiesPath = path.join(__dirname, 'cookies.json');
+const cookiesPath = path.join(__dirname, "cookies.json");
 
-const GC_USERNAME = process.env.GEOCACHING_USERNAME || '';
-const GC_PASSWORD = process.env.GEOCACHING_PASSWORD || '';
-const OPENAI_KEY = process.env.OPENAI_API_KEY || '';
+const GC_USERNAME = process.env.GEOCACHING_USERNAME || "";
+const GC_PASSWORD = process.env.GEOCACHING_PASSWORD || "";
+const OPENAI_KEY = process.env.OPENAI_API_KEY || "";
 
 if (!GC_USERNAME || !GC_PASSWORD || !OPENAI_KEY) {
-  console.error('ERROR: Missing required env variables in .env');
+  console.error("ERROR: Missing required env variables in .env");
   process.exit(1);
 }
 
@@ -53,16 +53,16 @@ interface LogItem {
     while (true) {
       const code = await askUserForCode(/* allowBlank */ true);
       if (!code) {
-        console.log('No code entered. Exiting.');
+        console.log("No code entered. Exiting.");
         break;
       }
       await runSingleWorkflow(page, code);
       // then confirm if we want more
       const { again } = await inquirer.prompt<{ again: boolean }>([
         {
-          type: 'confirm',
-          name: 'again',
-          message: 'Create another log entry for a different geocache code?',
+          type: "confirm",
+          name: "again",
+          message: "Create another log entry for a different geocache code?",
           default: false,
         },
       ]);
@@ -76,7 +76,7 @@ interface LogItem {
   await browser.close();
   process.exit(0);
 })().catch(err => {
-  console.error('Fatal error:', err);
+  console.error("Fatal error:", err);
   process.exit(1);
 });
 
@@ -88,28 +88,28 @@ async function initBrowserFlow(): Promise<{ browser: any; page: any }> {
 
   const browser = await puppeteer.launch({
     headless: false,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
   const page = await browser.newPage();
 
   await loadCookies(page);
 
   // Attempt sign-in page
-  await page.goto('https://www.geocaching.com/account/signin', { waitUntil: 'networkidle2' });
+  await page.goto("https://www.geocaching.com/account/signin", { waitUntil: "networkidle2" });
 
   // If we see /signin => do cookie overlay & login
-  if (page.url().includes('/account/signin')) {
+  if (page.url().includes("/account/signin")) {
     await handleCookiebotOverlay(page);
 
-    const loggedIn = !page.url().includes('/account/signin');
+    const loggedIn = !page.url().includes("/account/signin");
     if (!loggedIn) {
-      console.log('Not logged in. Logging in now...');
+      console.log("Not logged in. Logging in now...");
       await doLogin(page, GC_USERNAME, GC_PASSWORD);
-      console.log('Login successful. Saving cookies...');
+      console.log("Login successful. Saving cookies...");
       await saveCookies(page);
     }
   } else {
-    console.log('Already logged in (cookies loaded).');
+    console.log("Already logged in (cookies loaded).");
   }
 
   return { browser, page };
@@ -122,18 +122,18 @@ async function initBrowserFlow(): Promise<{ browser: any; page: any }> {
 async function askUserForCode(allowBlank: boolean): Promise<string | null> {
   while (true) {
     const { code } = await inquirer.prompt<{ code: string }>({
-      type: 'input',
-      name: 'code',
-      message: 'Enter a geocache code (e.g. GC12345) or blank to exit:',
+      type: "input",
+      name: "code",
+      message: "Enter a geocache code (e.g. GC12345) or blank to exit:",
     });
 
     if (!code) {
       if (allowBlank) return null;
-      console.log('No code given. Please try again.');
+      console.log("No code given. Please try again.");
       continue;
     }
     if (!/^GC[a-zA-Z0-9]+$/.test(code)) {
-      console.log('Invalid format. Must be GC plus letters/numbers. Try again.\n');
+      console.log("Invalid format. Must be GC plus letters/numbers. Try again.\n");
       continue;
     }
     return code;
@@ -149,13 +149,14 @@ async function runSingleWorkflow(page: any, code: string): Promise<void> {
 
   // navigate
   const cacheUrl = `https://www.geocaching.com/geocache/${code}`;
-  await page.goto(cacheUrl, { waitUntil: 'networkidle2' });
+  await page.goto(cacheUrl, { waitUntil: "networkidle2" });
 
   // fetch name
-  let cacheName = '';
+  let cacheName = "";
   try {
-    cacheName = await page.$eval('#ctl00_ContentBody_CacheName', (el: Element) =>
-      el.textContent?.trim() || ''
+    cacheName = await page.$eval(
+      "#ctl00_ContentBody_CacheName",
+      (el: Element) => el.textContent?.trim() || "",
     );
   } catch {
     console.warn(`Could not read cache name for ${code}`);
@@ -165,7 +166,7 @@ async function runSingleWorkflow(page: any, code: string): Promise<void> {
   const logs = await collectGefundenLogs(page, 40);
   console.log(`Collected ${logs.length} "Gefunden" logs for ${code}.`);
   if (logs.length === 0) {
-    console.warn('No logs found. Skipping.');
+    console.warn("No logs found. Skipping.");
     return;
   }
 
@@ -173,10 +174,10 @@ async function runSingleWorkflow(page: any, code: string): Promise<void> {
   let findCount: number | undefined;
   try {
     const findCountStr = await page.$eval(
-      '.player-profile span:nth-child(2)',
-      (el: Element) => el.textContent?.trim() || ''
+      ".player-profile span:nth-child(2)",
+      (el: Element) => el.textContent?.trim() || "",
     );
-    findCount = Number.parseInt(findCountStr.replace(/[^\d]/g, ''));
+    findCount = Number.parseInt(findCountStr.replace(/[^\d]/g, ""));
   } catch {
     findCount = undefined;
   }
@@ -194,12 +195,12 @@ async function runSingleWorkflow(page: any, code: string): Promise<void> {
 async function askUserForPersonalNotes(): Promise<string> {
   const { personalNotes } = await inquirer.prompt<{ personalNotes: string }>([
     {
-      type: 'input',
-      name: 'personalNotes',
-      message: 'Enter any personal notes or remarks for the log:',
+      type: "input",
+      name: "personalNotes",
+      message: "Enter any personal notes or remarks for the log:",
     },
   ]);
-  return personalNotes || '';
+  return personalNotes || "";
 }
 
 /**
@@ -207,11 +208,11 @@ async function askUserForPersonalNotes(): Promise<string> {
  */
 async function loadCookies(page: any): Promise<void> {
   if (!fs.existsSync(cookiesPath)) {
-    console.log('No cookies file found, skipping load.');
+    console.log("No cookies file found, skipping load.");
     return;
   }
   try {
-    const cookiesJson = fs.readFileSync(cookiesPath, 'utf-8');
+    const cookiesJson = fs.readFileSync(cookiesPath, "utf-8");
     const cookies = JSON.parse(cookiesJson);
     if (Array.isArray(cookies)) {
       for (const cookie of cookies) {
@@ -220,7 +221,7 @@ async function loadCookies(page: any): Promise<void> {
       console.log(`Loaded ${cookies.length} cookies from disk.`);
     }
   } catch (err) {
-    console.error('Failed to load cookies:', err);
+    console.error("Failed to load cookies:", err);
   }
 }
 
@@ -230,11 +231,11 @@ async function loadCookies(page: any): Promise<void> {
 async function saveCookies(page: any): Promise<void> {
   try {
     const client = await page.target().createCDPSession();
-    const allCookies = (await client.send('Network.getAllCookies'))?.cookies || [];
-    fs.writeFileSync(cookiesPath, JSON.stringify(allCookies, null, 2), 'utf-8');
+    const allCookies = (await client.send("Network.getAllCookies"))?.cookies || [];
+    fs.writeFileSync(cookiesPath, JSON.stringify(allCookies, null, 2), "utf-8");
     console.log(`Saved ${allCookies.length} cookies to ${cookiesPath}`);
   } catch (err) {
-    console.error('Failed to save cookies:', err);
+    console.error("Failed to save cookies:", err);
   }
 }
 
@@ -243,10 +244,10 @@ async function saveCookies(page: any): Promise<void> {
  */
 async function handleCookiebotOverlay(page: any): Promise<void> {
   try {
-    await page.waitForSelector('#CybotCookiebotDialogBodyLevelButtonLevelOptinDeclineAll', {
+    await page.waitForSelector("#CybotCookiebotDialogBodyLevelButtonLevelOptinDeclineAll", {
       timeout: 3000,
     });
-    await page.click('#CybotCookiebotDialogBodyLevelButtonLevelOptinDeclineAll');
+    await page.click("#CybotCookiebotDialogBodyLevelButtonLevelOptinDeclineAll");
     console.log('Clicked "Necessary" on Cookiebot overlay');
     await delay(1000);
   } catch {
@@ -258,14 +259,14 @@ async function handleCookiebotOverlay(page: any): Promise<void> {
  * Do login
  */
 async function doLogin(page: any, username: string, password: string): Promise<void> {
-  await page.waitForSelector('#UsernameOrEmail');
-  await page.type('#UsernameOrEmail', username, { delay: 50 });
+  await page.waitForSelector("#UsernameOrEmail");
+  await page.type("#UsernameOrEmail", username, { delay: 50 });
 
-  await page.waitForSelector('#Password');
-  await page.type('#Password', password, { delay: 50 });
+  await page.waitForSelector("#Password");
+  await page.type("#Password", password, { delay: 50 });
 
-  await page.click('#SignIn');
-  await page.waitForNavigation({ waitUntil: 'networkidle2' });
+  await page.click("#SignIn");
+  await page.waitForNavigation({ waitUntil: "networkidle2" });
 }
 
 /**
@@ -296,21 +297,21 @@ async function collectGefundenLogs(page: any, minCount: number = 40): Promise<Lo
  * Extract "Gefunden" logs from the page
  */
 async function fetchGefundenLogs(page: any): Promise<LogItem[]> {
-  return page.$$eval('#cache_logs_table tr.log-row', (rows: Element[]) => {
+  return page.$$eval("#cache_logs_table tr.log-row", (rows: Element[]) => {
     return rows
       .map(row => {
-        const typeImg = row.querySelector<HTMLImageElement>('.LogType img');
-        const logType = typeImg?.getAttribute('title')?.trim() || '';
-        if (logType !== 'Gefunden') return null;
+        const typeImg = row.querySelector<HTMLImageElement>(".LogType img");
+        const logType = typeImg?.getAttribute("title")?.trim() || "";
+        if (logType !== "Gefunden") return null;
 
-        const userEl = row.querySelector<HTMLElement>('.LogDisplayLeft .h5');
-        const user = userEl ? userEl.textContent?.trim() || 'UnknownUser' : 'UnknownUser';
+        const userEl = row.querySelector<HTMLElement>(".LogDisplayLeft .h5");
+        const user = userEl ? userEl.textContent?.trim() || "UnknownUser" : "UnknownUser";
 
-        const dateEl = row.querySelector<HTMLElement>('.LogDate, .minorDetails.LogDate');
-        const date = dateEl ? dateEl.textContent?.trim() || 'UnknownDate' : 'UnknownDate';
+        const dateEl = row.querySelector<HTMLElement>(".LogDate, .minorDetails.LogDate");
+        const date = dateEl ? dateEl.textContent?.trim() || "UnknownDate" : "UnknownDate";
 
-        const textEl = row.querySelector<HTMLElement>('.LogText');
-        const text = textEl ? textEl.textContent?.trim() || '' : '';
+        const textEl = row.querySelector<HTMLElement>(".LogText");
+        const text = textEl ? textEl.textContent?.trim() || "" : "";
 
         return { user, date, text, logType };
       })
@@ -325,7 +326,7 @@ function mergeLogs(existing: LogItem[], newLogs: LogItem[]): LogItem[] {
   const merged = [...existing];
   for (const log of newLogs) {
     const duplicate = merged.some(
-      x => x.user === log.user && x.date === log.date && x.text === log.text
+      x => x.user === log.user && x.date === log.date && x.text === log.text,
     );
     if (!duplicate) merged.push(log);
   }
@@ -346,12 +347,10 @@ async function generateLogEntry(
   cacheName: string,
   logs: LogItem[],
   findCount: number | undefined,
-  personalNotes: string
+  personalNotes: string,
 ): Promise<string> {
   const subset = logs.slice(0, 30);
-  const logsText = subset
-    .map((l, i) => `[Log #${i + 1}]: ${l.text}`)
-    .join('\n\n');
+  const logsText = subset.map((l, i) => `[Log #${i + 1}]: ${l.text}`).join("\n\n");
 
   const userPrompt = `
 Schreibe ein Geocaching-Log, das enthusiastisch und detailliert ist und eine persönliche Erzählung über die Suche und das Finden des Caches enthält. Verwende einen wertschätzenden und positiven Ton. Erwähne Herausforderungen sowie bemerkenswerte Eigenschaften des Ortes oder Caches die andere Personen in den Logs ebenfalls schildern. Füge Ausdrücke von Anstrengung oder Erfolg hinzu, die du in anderen Einträgen findest. Der Logeintrag sollte eine kleine Geschichte erzählen und die Kreativität und Mühe des Cache-Owners würdigen. Die Länge sollte ca. 60 Wörter betragen. Falls es weniger Inhalte gibt die es wert sind erwähnt zu werden, kann der Log auch kürzer sein.
@@ -367,15 +366,19 @@ ${logsText}
 `.trim();
 
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: "gpt-4o-mini",
     messages: [
-      { role: 'system', content: 'Du bist ein hilfreicher Assistent, der Geocache-Logs in deutscher Sprache schreibt.' },
-      { role: 'user', content: userPrompt },
+      {
+        role: "system",
+        content:
+          "Du bist ein hilfreicher Assistent, der Geocache-Logs in deutscher Sprache schreibt.",
+      },
+      { role: "user", content: userPrompt },
     ],
     temperature: 0.7,
   });
 
-  const content = response.choices?.[0]?.message?.content?.trim() || '';
-  const findNumber = findCount !== undefined ? ` (#${findCount + 1})` : '';
+  const content = response.choices?.[0]?.message?.content?.trim() || "";
+  const findNumber = findCount !== undefined ? ` (#${findCount + 1})` : "";
   return `[${cacheName}]\n\n${content}\n\nTFTC!${findNumber}`;
 }
