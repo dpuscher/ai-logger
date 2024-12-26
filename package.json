@@ -5,22 +5,45 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js",
-    "format": "prettier --write ."
+    "dev": "tsx src/main.ts",
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "format": "biome check --write --unsafe"
   },
   "author": "",
   "license": "ISC",
   "description": "",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dpuscher/ai-cache-log.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dpuscher/ai-cache-log/issues"
+  },
+  "homepage": "https://github.com/dpuscher/ai-cache-log#readme",
+  "engines": {
+    "node": ">=22"
+  },
+  "keywords": ["ai", "geocache", "log", "geocaching"],
   "dependencies": {
+    "chalk": "^5.4.1",
+    "clipboardy": "^4.0.0",
     "dotenv": "^16.4.7",
     "inquirer": "^12.3.0",
     "openai": "^4.77.0",
+    "ora": "^8.1.1",
     "puppeteer": "^23.11.1",
     "puppeteer-extra": "^3.3.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2",
-    "ts-node": "^10.9.2"
+    "puppeteer-extra-plugin-adblocker": "^2.13.6",
+    "puppeteer-extra-plugin-block-resources": "^2.4.3",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
   },
   "devDependencies": {
-    "prettier": "^3.4.2"
+    "@biomejs/biome": "1.9.4",
+    "tsx": "^4.19.2"
+  },
+  "overrides": {
+    "whatwg-url": "^13.0.0"
   }
 }
