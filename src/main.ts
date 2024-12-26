@@ -1,13 +1,12 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env node
 
 import chalk from "chalk";
 import clipboardy from "clipboardy";
 import inquirer from "inquirer";
 import ora from "ora";
 import type { Page } from "puppeteer";
-import { GC_PASSWORD, GC_USERNAME } from "./config.js";
 import { fetchDraftInfos } from "./draftReader.js";
-import { collectGefundenLogs } from "./logCollector.js";
+import { collectFoundLogs } from "./logCollector.js";
 import { generateLogEntry, refineLogEntry } from "./openAiHelper.js";
 import {
   doLogin,
@@ -18,7 +17,7 @@ import {
 } from "./puppeteerSetup.js";
 import { askUserForPersonalNotes, openInDefaultBrowser, promptUserForCacheCode } from "./utils.js";
 
-async function main() {
+const main = async () => {
   console.log(chalk.greenBright("🚀 Welcome to the GC Logger!"));
 
   // Ask how to create logs
@@ -44,12 +43,38 @@ async function main() {
 
   await handleCookiebotOverlay(page);
 
-  // check if we are signed in
+  // Check if already logged in
   if (page.url().includes("/account/signin")) {
-    console.log(chalk.yellow("Not logged in, performing login..."));
-    await doLogin(page, GC_USERNAME, GC_PASSWORD);
-    console.log(chalk.green("✅ Login successful, saving cookies..."));
-    await saveCookies(page);
+    // Not logged in, prompt for login
+    let loggedIn = false;
+
+    while (!loggedIn) {
+      const credentials = await inquirer.prompt<{ username: string; password: string }>([
+        {
+          type: "input",
+          name: "username",
+          message: "Enter your Geocaching.com username:",
+        },
+        {
+          type: "password",
+          name: "password",
+          message: "Enter your Geocaching.com password:",
+          mask: "*",
+        },
+      ]);
+
+      const spinnerLogin = ora(chalk.yellow("Logging in...")).start();
+      await doLogin(page, credentials.username, credentials.password);
+      await saveCookies(page);
+
+      // Check if login was successful
+      if (page.url().includes("/account/signin")) {
+        spinnerLogin.fail(chalk.red("Login failed. Please try again."));
+      } else {
+        spinnerLogin.succeed(chalk.green("Login successful."));
+        loggedIn = true;
+      }
+    }
   } else {
     console.log(chalk.cyan("Already logged in (cookies loaded)."));
   }
@@ -129,19 +154,19 @@ async function main() {
   console.log(chalk.greenBright("All done! Have fun geocaching! ✨"));
   await browser.close();
   process.exit(0);
-}
+};
 
-async function displayLog(
+const displayLog = async (
   cacheName: string,
   logContent: string,
   logType: "AI-Suggested" | "Refined",
-) {
+) => {
   console.log(chalk.magentaBright(`\n=== ${logType} Log Entry for "${cacheName}" ===\n`));
   console.log(logContent);
-}
+};
 
 // Modify runSingleWorkflow to allow refining logs instead of multiple recreations
-async function runSingleWorkflow(page: Page, code: string, draftId: string | null) {
+const runSingleWorkflow = async (page: Page, code: string, draftId: string | null) => {
   // gather personal notes
   const personalNotes = await askUserForPersonalNotes();
 
@@ -163,9 +188,9 @@ async function runSingleWorkflow(page: Page, code: string, draftId: string | nul
   }
 
   // gather logs
-  const logs = await collectGefundenLogs(page, 40);
+  const logs = await collectFoundLogs(page, 40);
   if (!logs.length) {
-    console.log(chalk.yellow('No "Gefunden" logs found. Nothing to do here...'));
+    console.log(chalk.yellow('No "Found" logs found. Nothing to do here...'));
     return;
   }
 
@@ -212,7 +237,7 @@ async function runSingleWorkflow(page: Page, code: string, draftId: string | nul
     : `https://www.geocaching.com/live/geocache/${code}/log`;
 
   openInDefaultBrowser(externalLogUrl);
-}
+};
 
 main().catch(err => {
   console.error(chalk.red("Fatal error:"), err);
