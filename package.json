@@ -1,7 +1,7 @@
 {
   "name": "ai-cache-log",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/main.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -45,5 +45,8 @@
   },
   "overrides": {
     "whatwg-url": "^13.0.0"
+  },
+  "bin": {
+    "ai-cache-log": "dist/main.js"
   }
 }

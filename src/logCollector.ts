@@ -11,18 +11,18 @@ export interface LogItem {
 }
 
 /**
- * Collect "Gefunden" logs from a geocache detail page
+ * Collect "Found" logs from a geocache detail page
  */
-export async function collectGefundenLogs(page: Page, minCount: number): Promise<LogItem[]> {
-  const spinner = ora(chalk.blue(`Collecting at least ${minCount} "Gefunden" logs...`)).start();
+export const collectFoundLogs = async (page: Page, minCount: number): Promise<LogItem[]> => {
+  const spinner = ora(chalk.blue(`Collecting at least ${minCount} "Found" logs...`)).start();
   let logs: LogItem[] = [];
   let attempts = 0;
   const maxAttempts = 10;
 
   while (logs.length < minCount && attempts < maxAttempts) {
-    const newLogs = await fetchGefundenLogs(page);
+    const newLogs = await fetchFoundLogs(page);
     logs = mergeLogs(logs, newLogs);
-    spinner.text = `Scroll #${attempts + 1}: we have ${chalk.magenta(logs.length)} "Gefunden" logs.`;
+    spinner.text = `Scroll #${attempts + 1}: we have ${chalk.magenta(logs.length)} "Found" logs.`;
 
     if (logs.length >= minCount) break;
 
@@ -33,20 +33,22 @@ export async function collectGefundenLogs(page: Page, minCount: number): Promise
     await sleep(2000);
     attempts++;
   }
-  spinner.succeed(chalk.green(`Collected a total of ${logs.length} "Gefunden" logs.`));
+  spinner.succeed(chalk.green(`Collected a total of ${logs.length} "Found" logs.`));
   return logs;
-}
+};
 
 /**
- * Grab "Gefunden" logs from the DOM
+ * Grab "Found" logs from the DOM
  */
-const fetchGefundenLogs = async (page: Page): Promise<LogItem[]> => {
+const fetchFoundLogs = async (page: Page): Promise<LogItem[]> => {
   return page.$$eval("#cache_logs_table tr.log-row", (rows: Element[]) => {
     return rows
       .map(row => {
         const typeImg = row.querySelector<HTMLImageElement>(".LogType img");
-        const logType = typeImg?.getAttribute("title")?.trim() || "";
-        if (logType !== "Gefunden") return null;
+        const logType = typeImg?.getAttribute("src")?.trim() || "";
+        if (!logType.endsWith("/logtypes/2.png")) {
+          return null;
+        }
 
         const userEl = row.querySelector<HTMLElement>(".LogDisplayLeft .h5");
         const user = userEl?.textContent?.trim() || "UnknownUser";

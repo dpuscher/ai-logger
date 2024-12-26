@@ -36,7 +36,7 @@ puppeteer.use(
 /**
  * Launch Puppeteer
  */
-export async function launchPuppeteer() {
+export const launchPuppeteer = async () => {
   const spinner = ora(chalk.blue("Launching Puppeteer...")).start();
   try {
     // @ts-expect-error - Types of plugin are wrong
@@ -48,15 +48,12 @@ export async function launchPuppeteer() {
         "--disable-blink-features=AutomationControlled",
         "--window-size=1920,1080",
       ],
-      defaultViewport: null, // Use default viewport
+      defaultViewport: null,
     });
     const page = await browser.newPage();
 
-    // Set a realistic user-agent
     await page.setUserAgent(
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-        "AppleWebKit/537.36 (KHTML, like Gecko) " +
-        "Chrome/115.0.0.0 Safari/537.36",
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
     );
 
     spinner.succeed(chalk.green("Puppeteer launched successfully!"));
@@ -65,12 +62,12 @@ export async function launchPuppeteer() {
     spinner.fail(chalk.red(`Failed to launch Puppeteer: ${err}`));
     process.exit(1);
   }
-}
+};
 
 /**
  * Load cookies if they exist
  */
-export async function loadCookies(page: Page): Promise<void> {
+export const loadCookies = async (page: Page): Promise<void> => {
   const spinner = ora(chalk.blue("Loading cookies...")).start();
   if (!fs.existsSync(cookiesPath)) {
     spinner.info(chalk.yellow("No cookies file found, skipping load."));
@@ -88,27 +85,26 @@ export async function loadCookies(page: Page): Promise<void> {
   } catch (err) {
     spinner.fail(chalk.red(`Failed to load cookies: ${err}`));
   }
-}
+};
 
 /**
  * Save cookies
  */
-export async function saveCookies(page: Page): Promise<void> {
+export const saveCookies = async (page: Page): Promise<void> => {
   const spinner = ora(chalk.blue("Saving cookies...")).start();
   try {
-    const client = await page.target().createCDPSession();
-    const allCookies = (await client.send("Network.getAllCookies"))?.cookies || [];
-    fs.writeFileSync(cookiesPath, JSON.stringify(allCookies, null, 2), "utf-8");
-    spinner.succeed(chalk.green(`Saved ${allCookies.length} cookies to ${cookiesPath}`));
+    const cookies = await page.browser().cookies();
+    fs.writeFileSync(cookiesPath, JSON.stringify(cookies, null, 2), "utf-8");
+    spinner.succeed(chalk.green(`Saved ${cookies.length} cookies to ${cookiesPath}`));
   } catch (err) {
     spinner.fail(chalk.red(`Failed to save cookies: ${err}`));
   }
-}
+};
 
 /**
  * Cookiebot overlay (once on first page)
  */
-export async function handleCookiebotOverlay(page: Page): Promise<void> {
+export const handleCookiebotOverlay = async (page: Page): Promise<void> => {
   const spinner = ora(chalk.blue("Checking for Cookiebot overlay...")).start();
   try {
     await page.waitForSelector("#CybotCookiebotDialogBodyLevelButtonLevelOptinDeclineAll", {
@@ -120,26 +116,35 @@ export async function handleCookiebotOverlay(page: Page): Promise<void> {
   } catch {
     spinner.info(chalk.yellow('No Cookiebot overlay or "Necessary" button not found.'));
   }
-}
+};
 
 /**
  * Attempt login if not already logged in
  */
-export async function doLogin(page: Page, username: string, password: string): Promise<void> {
-  const spinner = ora(chalk.blue("Attempting to log in...")).start();
-  try {
-    await page.waitForSelector("#UsernameOrEmail");
-    await page.type("#UsernameOrEmail", username, { delay: 50 });
+export const doLogin = async (page: Page, username: string, password: string): Promise<void> => {
+  const usernameSelector = "#UsernameOrEmail";
+  const passwordSelector = "#Password";
 
-    await page.waitForSelector("#Password");
-    await page.type("#Password", password, { delay: 50 });
-
-    await page.click("#SignIn");
-    await page.waitForNavigation({ waitUntil: "networkidle2" });
-
-    spinner.succeed(chalk.green("Login successful."));
-  } catch (err) {
-    spinner.fail(chalk.red(`Login failed: ${err}`));
-    process.exit(1);
+  await page.waitForSelector(usernameSelector);
+  const usernameLength = await page.$eval(
+    usernameSelector,
+    (el: Element) => el.getAttribute("value")?.length ?? 0,
+  );
+  for (let i = 0; i < usernameLength; i++) {
+    await page.keyboard.press("Backspace");
   }
-}
+  await page.type(usernameSelector, username, { delay: 50 });
+
+  await page.waitForSelector(passwordSelector);
+  const passwordLength = await page.$eval(
+    passwordSelector,
+    (el: Element) => el.getAttribute("value")?.length ?? 0,
+  );
+  for (let i = 0; i < passwordLength; i++) {
+    await page.keyboard.press("Backspace");
+  }
+  await page.type(passwordSelector, password, { delay: 50 });
+
+  await page.click("#SignIn");
+  await page.waitForNavigation({ waitUntil: "networkidle2" });
+};

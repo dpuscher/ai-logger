@@ -11,11 +11,11 @@ const messages: ChatCompletionMessageParam[] = [];
 /**
  * Generate final AI log text
  */
-export async function generateLogEntry(
+export const generateLogEntry = async (
   cacheName: string,
   logs: LogItem[],
   personalNotes: string,
-): Promise<string> {
+): Promise<string> => {
   const spinner = ora(
     chalk.blue(`Generating AI-based log text for cache: ${cacheName}...`),
   ).start();
@@ -23,7 +23,7 @@ export async function generateLogEntry(
   const logsText = subset.map((l, i) => `[Log #${i + 1}]: ${l.text}`).join("\n\n");
 
   const userPrompt = `
-Schreibe ein Geocaching-Log, das enthusiastisch und detailliert ist und eine persönliche Erzählung über die Suche und das Finden des Caches enthält. Verwende einen wertschätzenden und positiven Ton. Erwähne Herausforderungen sowie bemerkenswerte Eigenschaften des Ortes oder Caches, die andere Personen in den Logs ebenfalls schildern. Füge Ausdrücke von Anstrengung oder Erfolg hinzu, die du in anderen Einträgen findest. Der Logeintrag sollte eine kleine Geschichte erzählen und die Kreativität und Mühe des Cache-Owners würdigen. Die Länge sollte ca. 60 Wörter betragen. Falls es weniger Inhalte gibt, kann der Log auch kürzer sein.
+Schreibe ein Geocaching-Log, das enthusiastisch und detailliert ist und eine persönliche Erzählung über die Suche und das Finden des Caches enthält. Verwende einen wertschätzenden und positiven Ton. Erwähne Herausforderungen sowie bemerkenswerte Eigenschaften des Ortes oder Caches, die andere Personen in den Logs ebenfalls schildern. Füge Ausdrücke von Anstrengung oder Erfolg hinzu, die du in anderen Einträgen findest. Der Logeintrag sollte eine kleine Geschichte erzählen und die Kreativität und Mühe des Cache-Owners würdigen. Die Länge sollte ca. 60 Wörter betragen. Falls es weniger Inhalte gibt, kann der Log auch kürzer sein. Bitte benutze nicht die Abkürzung TFTC.
 Das Log soll so klingen, als ob es von einem echten Geocacher stammt, der den Cache tatsächlich gefunden hat.
 
 Persönliche Notizen (vom User hinzugefügt):
@@ -59,12 +59,12 @@ ${logsText}
     spinner.fail(chalk.red(`Failed to generate AI log entry: ${err}`));
     throw err;
   }
-}
+};
 
 /**
  * Refine existing AI log text using chat history or thread
  */
-export async function refineLogEntry(existingLog: string, prompt: string): Promise<string> {
+export const refineLogEntry = async (existingLog: string, prompt: string): Promise<string> => {
   const spinner = ora(chalk.blue("Refining AI-based log text...")).start();
 
   // Append refinement prompt to messages
@@ -93,4 +93,4 @@ export async function refineLogEntry(existingLog: string, prompt: string): Promi
     spinner.fail(chalk.red(`Failed to refine AI log entry: ${err}`));
     throw err;
   }
-}
+};

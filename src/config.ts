@@ -1,6 +1,7 @@
 import "dotenv/config.js";
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 export const GC_USERNAME = process.env.GEOCACHING_USERNAME || "";
 export const GC_PASSWORD = process.env.GEOCACHING_PASSWORD || "";
@@ -13,8 +14,11 @@ if (!GC_USERNAME || !GC_PASSWORD || !OPENAI_KEY) {
   process.exit(1);
 }
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Define the new cookies directory
+const cookiesDir = path.join(os.homedir(), ".ai-cache-log");
+export const cookiesPath = path.join(cookiesDir, "cookies.json");
 
-// Where cookies get stored
-export const cookiesPath = path.join(__dirname, "..", "cookies.json");
+// Ensure the cookies directory exists
+if (!fs.existsSync(cookiesDir)) {
+  fs.mkdirSync(cookiesDir, { recursive: true });
+}
