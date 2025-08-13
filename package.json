@@ -8,7 +8,8 @@
     "dev": "tsx src/main.ts",
     "build": "tsc",
     "start": "node dist/main.js",
-    "format": "biome check --write --unsafe"
+    "format": "biome check --write --unsafe",
+    "setup": "yarn install && yarn allow-scripts"
   },
   "author": "",
   "license": "ISC",
@@ -41,12 +42,21 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
+    "@lavamoat/allow-scripts": "^3.3.4",
+    "@lavamoat/preinstall-always-fail": "^2.1.1",
     "tsx": "^4.19.2"
   },
   "overrides": {
     "whatwg-url": "^13.0.0"
   },
-  "bin": {
-    "ai-cache-log": "dist/main.js"
+  "bin": "dist/main.js",
+  "packageManager": "yarn@4.9.2",
+  "lavamoat": {
+    "allowScripts": {
+      "@biomejs/biome": false,
+      "@lavamoat/preinstall-always-fail": false,
+      "puppeteer": false,
+      "tsx>esbuild": false
+    }
   }
 }
