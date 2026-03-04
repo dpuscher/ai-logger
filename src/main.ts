@@ -7,7 +7,7 @@ import ora from "ora";
 import type { Page } from "puppeteer";
 import { fetchDraftInfos } from "./draftReader.js";
 import { collectFoundLogs } from "./logCollector.js";
-import { generateLogEntry, refineLogEntry } from "./openAiHelper.js";
+import { checkLoggingRequirements, generateLogEntry, refineLogEntry } from "./openAiHelper.js";
 import {
   doLogin,
   handleCookiebotOverlay,
@@ -16,6 +16,36 @@ import {
   saveCookies,
 } from "./puppeteerSetup.js";
 import { askUserForPersonalNotes, openInDefaultBrowser, promptUserForCacheCode } from "./utils.js";
+
+// Robust navigation with retries to mitigate intermittent timeouts/network hangs
+const navigateWithRetries = async (page: Page, url: string, attempts = 3): Promise<void> => {
+  const strategies: Array<"networkidle2" | "domcontentloaded" | "load"> = [
+    "networkidle2",
+    "domcontentloaded",
+    "load",
+  ];
+  let lastError: unknown;
+  for (let i = 0; i < attempts; i++) {
+    const waitUntil = strategies[Math.min(i, strategies.length - 1)];
+    try {
+      await page.goto(url, { waitUntil, timeout: 60_000 });
+      // Page-specific readiness: ensure cache name exists as signal of meaningful render
+      await page.waitForSelector("#ctl00_ContentBody_CacheName", { timeout: 15_000 });
+      return;
+    } catch (err) {
+      lastError = err;
+      // brief backoff before retry
+      const backoffMs = 1500 * (i + 1);
+      console.warn(
+        chalk.yellow(
+          `Navigation attempt ${i + 1}/${attempts} failed (waitUntil=${waitUntil}). Retrying in ${backoffMs}ms...`,
+        ),
+      );
+      await new Promise(res => setTimeout(res, backoffMs));
+    }
+  }
+  throw lastError;
+};
 
 const main = async () => {
   console.log(chalk.greenBright("🚀 Welcome to the GC Logger!"));
@@ -48,20 +78,26 @@ const main = async () => {
     // Not logged in, prompt for login
     let loggedIn = false;
 
+    let useEnvCredentials = !!(process.env.GEOCACHING_USERNAME && process.env.GEOCACHING_PASSWORD);
+
     while (!loggedIn) {
-      const credentials = await inquirer.prompt<{ username: string; password: string }>([
-        {
-          type: "input",
-          name: "username",
-          message: "Enter your Geocaching.com username:",
-        },
-        {
-          type: "password",
-          name: "password",
-          message: "Enter your Geocaching.com password:",
-          mask: "*",
-        },
-      ]);
+      const credentials = useEnvCredentials
+        ? { username: process.env.GEOCACHING_USERNAME!, password: process.env.GEOCACHING_PASSWORD! }
+        : await inquirer.prompt<{ username: string; password: string }>([
+            {
+              type: "input",
+              name: "username",
+              message: "Enter your Geocaching.com username:",
+            },
+            {
+              type: "password",
+              name: "password",
+              message: "Enter your Geocaching.com password:",
+              mask: "*",
+            },
+          ]);
+
+      useEnvCredentials = false;
 
       const spinnerLogin = ora(chalk.yellow("Logging in...")).start();
       await doLogin(page, credentials.username, credentials.password);
@@ -160,9 +196,11 @@ const displayLog = async (
   cacheName: string,
   logContent: string,
   logType: "AI-Suggested" | "Refined",
+  findCount: number | undefined,
 ) => {
   console.log(chalk.magentaBright(`\n=== ${logType} Log Entry for "${cacheName}" ===\n`));
   console.log(logContent);
+  console.log(`\nTFTC! (#${(findCount ?? 0) + 1})`);
 };
 
 // Modify runSingleWorkflow to allow refining logs instead of multiple recreations
@@ -173,11 +211,12 @@ const runSingleWorkflow = async (page: Page, code: string, draftId: string | nul
   // load the geocache page
   const spinnerCache = ora(chalk.blue(`Loading geocache page for code: ${code}...`)).start();
   const cacheUrl = `https://www.geocaching.com/geocache/${code}`;
-  await page.goto(cacheUrl, { waitUntil: "networkidle2" });
+  await navigateWithRetries(page, cacheUrl, 3);
   spinnerCache.succeed(chalk.green(`Geocache page loaded for code: ${code}.`));
 
-  // get name
+  // get name and description
   let cacheName = "";
+  let cacheDescription = "";
   try {
     cacheName = await page.$eval(
       "#ctl00_ContentBody_CacheName",
@@ -185,6 +224,23 @@ const runSingleWorkflow = async (page: Page, code: string, draftId: string | nul
     );
   } catch {
     console.warn(chalk.red(`Could not read cache name for ${code}`));
+  }
+  try {
+    // Wait briefly for description elements (optional, so catch timeout)
+    await page.waitForSelector(
+      "#ctl00_ContentBody_ShortDescription, #ctl00_ContentBody_LongDescription",
+      { timeout: 5_000 },
+    ).catch(() => {});
+    cacheDescription = await page.evaluate(() => {
+      const short = document.querySelector("#ctl00_ContentBody_ShortDescription")?.textContent?.trim() || "";
+      const long = document.querySelector("#ctl00_ContentBody_LongDescription")?.textContent?.trim() || "";
+      return [short, long].filter(Boolean).join("\n\n").slice(0, 2000);
+    });
+    if (cacheDescription) {
+      console.log(chalk.gray(`  Cache description found (${cacheDescription.length} chars).`));
+    }
+  } catch {
+    // description is optional
   }
 
   // gather logs
@@ -197,19 +253,39 @@ const runSingleWorkflow = async (page: Page, code: string, draftId: string | nul
   // user find count
   let findCount: number | undefined;
   try {
-    // Update the selector to target the correct span containing "Funde"
-    const findCountStr = await page.$eval(
-      ".player-profile span.flex-col span:last-child",
-      (el: Element) => el.textContent?.trim() || "",
-    );
-    findCount = Number.parseInt(findCountStr.replace(/[^\d]/g, ""), 10);
+    findCount = await page.evaluate((): number | undefined => {
+      try {
+        const usernameEl = document.querySelector("header nav .username");
+        if (!usernameEl || !(usernameEl as HTMLElement).parentElement) return undefined;
+        const parent = (usernameEl as HTMLElement).parentElement as HTMLElement;
+        const lastChild = parent.lastChild as ChildNode | null;
+        const raw = (lastChild && (lastChild as Text).textContent) || parent.textContent || "";
+        const cleaned = raw.replaceAll(/[\.,]/g, "");
+        const n = Number.parseInt(cleaned, 10);
+        return Number.isFinite(n) ? n : undefined;
+      } catch {
+        return undefined;
+      }
+    });
   } catch {
     findCount = undefined;
   }
 
+  // check for special logging requirements in cache description
+  if (cacheDescription) {
+    const requirements = await checkLoggingRequirements(cacheDescription);
+    if (requirements.length) {
+      console.log(chalk.yellowBright("\n⚠️  Logging requirements detected:"));
+      for (const req of requirements) {
+        console.log(chalk.yellow(`  • ${req}`));
+      }
+      console.log();
+    }
+  }
+
   // generate initial AI log
-  const initialLog = await generateLogEntry(cacheName, logs, personalNotes);
-  await displayLog(cacheName, initialLog, "AI-Suggested");
+  const initialLog = await generateLogEntry(cacheName, logs, personalNotes, cacheDescription);
+  await displayLog(cacheName, initialLog, "AI-Suggested", findCount);
 
   // Initialize refinedLog with the initial log
   let refinedLog = initialLog;
@@ -226,7 +302,7 @@ const runSingleWorkflow = async (page: Page, code: string, draftId: string | nul
 
     const additionalNote = await askUserForPersonalNotes();
     refinedLog = await refineLogEntry(refinedLog, additionalNote);
-    await displayLog(cacheName, refinedLog, "Refined");
+    await displayLog(cacheName, refinedLog, "Refined", findCount);
   }
 
   await clipboardy.write(`${refinedLog}\n\nTFTC! (#${(findCount ?? 0) + 1})`); // Copy to clipboard

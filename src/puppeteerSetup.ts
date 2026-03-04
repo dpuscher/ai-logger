@@ -41,7 +41,7 @@ export const launchPuppeteer = async () => {
   try {
     // @ts-expect-error - Types of plugin are wrong
     const browser = await puppeteer.launch({
-      headless: "new",
+      headless: true,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
