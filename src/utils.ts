@@ -7,17 +7,19 @@ import ora from "ora";
  * For manual mode: let user input GC code
  */
 export const promptUserForCacheCode = async (): Promise<string | null> => {
-  const { code } = await inquirer.prompt<{ code: string }>({
-    type: "input",
-    name: "code",
-    message: "Enter a geocache code (e.g. GC12345) or just press ENTER to exit:",
-  });
-  if (!code) return null;
-  if (!/^GC[a-zA-Z0-9]+$/.test(code)) {
-    console.log(chalk.red("❌ Invalid code format. Must be GC plus letters/numbers."));
-    return null;
+  while (true) {
+    const { code } = await inquirer.prompt<{ code: string }>({
+      type: "input",
+      name: "code",
+      message: "Enter a geocache code (e.g. GC12345) or just press ENTER to exit:",
+    });
+    if (!code) return null;
+    if (!/^GC[a-zA-Z0-9]+$/.test(code)) {
+      console.log(chalk.red("❌ Invalid code format. Must be GC plus letters/numbers."));
+      continue;
+    }
+    return code;
   }
-  return code;
 };
 
 /**
