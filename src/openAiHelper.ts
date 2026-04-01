@@ -1,18 +1,23 @@
 import OpenAI from "openai";
 import chalk from "chalk";
 import ora from "ora";
-import { API_KEY } from "./config.js";
 import type { LogItem } from "./logCollector.js";
 
-const client = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: API_KEY,
-  defaultHeaders: {
-    "HTTP-Referer": "https://github.com/dpuscher/ai-cache-log",
-    "X-Title": "ai-cache-log",
-  },
-});
-const MODEL = "z-ai/glm-5";
+export interface AIConfig {
+  apiBaseUrl: string;
+  apiKey: string;
+  model: string;
+}
+
+const createClient = (config: AIConfig) =>
+  new OpenAI({
+    baseURL: config.apiBaseUrl,
+    apiKey: config.apiKey,
+    defaultHeaders: {
+      "HTTP-Referer": "https://github.com/dpuscher/ai-logger",
+      "X-Title": "ai-logger",
+    },
+  });
 
 const analyzePriorLogs = (texts: string[]) => {
   const wordCounts = texts.map((t) => t.split(/\s+/).filter(Boolean).length);
@@ -38,14 +43,39 @@ const analyzePriorLogs = (texts: string[]) => {
   return { avgWords, shortRatio, tftcRatio, quickEasyRatio, isSimple };
 };
 
-const chat = async (prompt: string, systemPrompt?: string): Promise<string> => {
+const chat = async (
+  client: OpenAI,
+  model: string,
+  prompt: string,
+  systemPrompt?: string,
+  onToken?: (token: string) => void,
+): Promise<string> => {
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [];
   if (systemPrompt) {
     messages.push({ role: "system", content: systemPrompt });
   }
   messages.push({ role: "user", content: prompt });
+
+  if (onToken) {
+    const stream = await client.chat.completions.create({
+      model,
+      temperature: 0.5,
+      messages,
+      stream: true,
+    });
+    let content = "";
+    for await (const chunk of stream) {
+      const token = chunk.choices[0]?.delta?.content ?? "";
+      if (token) {
+        onToken(token);
+        content += token;
+      }
+    }
+    return content.trim();
+  }
+
   const response = await client.chat.completions.create({
-    model: MODEL,
+    model,
     temperature: 0.5,
     messages,
   });
@@ -56,6 +86,7 @@ const chat = async (prompt: string, systemPrompt?: string): Promise<string> => {
  * Generate final AI log text
  */
 export const generateLogEntry = async (
+  config: AIConfig,
   cacheName: string,
   logs: LogItem[],
   personalNotes: string,
@@ -64,6 +95,7 @@ export const generateLogEntry = async (
   const spinner = ora(
     chalk.blue(`Generating AI-based log text for cache: ${cacheName}...`),
   ).start();
+  const client = createClient(config);
   const subset = logs.slice(0, 30);
   const logsText = subset
     .map((l, i) => `[Log #${i + 1}]: ${l.text}`)
@@ -71,8 +103,6 @@ export const generateLogEntry = async (
 
   const analysis = analyzePriorLogs(subset.map((s) => s.text));
 
-  // Determine target length based on prior log patterns
-  // Only go short if logs are clearly very brief (avg <20 words AND majority are short)
   const targetLength =
     analysis.avgWords < 20 && analysis.shortRatio > 0.6
       ? "20–40 words"
@@ -115,11 +145,30 @@ ${logsText}
 Output only the final log text. No headings, no quotes, no explanations.`.trim();
 
   try {
-    let content = await chat(userPrompt, systemPrompt);
+    let streamed = false;
+    let content = await chat(
+      client,
+      config.model,
+      userPrompt,
+      systemPrompt,
+      (token) => {
+        if (!streamed) {
+          spinner.stop();
+          streamed = true;
+        }
+        process.stdout.write(token);
+      },
+    );
+
+    if (streamed) {
+      process.stdout.write("\n");
+    } else {
+      spinner.stop();
+    }
 
     if (!content) {
       const fallbackPrompt = `Write a ~60-word geocaching log. Use the majority language of the prior logs; else the personal notes language; else German. Keep it authentic, first-person, positive, and do not use "TFTC". Output only the log text.\n\nNotes:\n${personalNotes}\n\nPrior logs:\n${logsText}`;
-      content = await chat(fallbackPrompt);
+      content = await chat(client, config.model, fallbackPrompt);
     }
 
     if (!content) {
@@ -135,7 +184,6 @@ Output only the final log text. No headings, no quotes, no explanations.`.trim()
       content = `Heute den Cache "${cacheName}" gefunden.${addendum} Vielen Dank an den Owner!`;
     }
 
-    spinner.succeed(chalk.green("AI log generation completed!"));
     return content;
   } catch (err) {
     spinner.fail(chalk.red(`Failed to generate AI log entry: ${err}`));
@@ -147,9 +195,14 @@ Output only the final log text. No headings, no quotes, no explanations.`.trim()
  * Analyze cache description for special logging requirements (e.g. upload photo, answer question)
  * Returns a list of requirement strings, or empty array if none found.
  */
-export const checkLoggingRequirements = async (cacheDescription: string): Promise<string[]> => {
+export const checkLoggingRequirements = async (
+  config: AIConfig,
+  cacheDescription: string,
+): Promise<string[]> => {
   if (!cacheDescription.trim()) return [];
 
+  const spinner = ora(chalk.blue("Checking logging requirements...")).start();
+  const client = createClient(config);
   const systemPrompt = `You extract explicit logging requirements from geocache descriptions. A logging requirement is something the cache owner explicitly asks finders to do in order to log the cache — such as uploading a photo, answering a question, posting a word or code, or contacting the owner. Be thorough: if the description mentions ANY action the logger must take, include it. When in doubt, include it.`;
 
   const prompt = `Read the following geocache description and list every explicit requirement the logger must fulfill (e.g. upload a photo, answer a question, include a specific word, contact the owner, etc.).
@@ -165,7 +218,8 @@ Rules:
 - If there are NO requirements at all, output exactly: NONE`;
 
   try {
-    const content = await chat(prompt, systemPrompt);
+    const content = await chat(client, config.model, prompt, systemPrompt);
+    spinner.stop();
     if (!content || content.trim().toUpperCase() === "NONE") return [];
     return content
       .split("\n")
@@ -173,6 +227,7 @@ Rules:
       .filter(Boolean)
       .filter(l => l.toUpperCase() !== "NONE");
   } catch {
+    spinner.stop();
     return [];
   }
 };
@@ -181,10 +236,12 @@ Rules:
  * Refine existing AI log text using chat history or thread
  */
 export const refineLogEntry = async (
+  config: AIConfig,
   existingLog: string,
   prompt: string,
 ): Promise<string> => {
   const spinner = ora(chalk.blue("Refining AI-based log text...")).start();
+  const client = createClient(config);
 
   try {
     const refinePrompt = `
@@ -219,11 +276,11 @@ ${existingLog}
 Additional notes:
 ${prompt}
 `;
-    let content = await chat(refinePrompt);
+    let content = await chat(client, config.model, refinePrompt);
 
     if (!content) {
       const fallbackRefine = `Improve the following geocaching log (~60 words). Keep language and facts, improve clarity and flow, and avoid "TFTC". Output only the refined log text.\n\nLog:\n${existingLog}\n\nAdditional notes:\n${prompt}`;
-      content = await chat(fallbackRefine);
+      content = await chat(client, config.model, fallbackRefine);
     }
 
     if (!content) {

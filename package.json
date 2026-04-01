@@ -1,5 +1,5 @@
 {
-  "name": "ai-cache-log",
+  "name": "ai-logger",
   "version": "1.0.0",
   "main": "dist/main.js",
   "type": "module",
@@ -7,22 +7,25 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx src/main.ts",
     "build": "tsc",
+    "prepare": "yarn build",
     "start": "node dist/main.js",
     "format": "biome check --write --unsafe",
     "setup": "yarn install && yarn allow-scripts"
   },
-  "author": "",
+  "author": "dpuscher",
   "license": "ISC",
-  "description": "",
-  "private": true,
+  "description": "AI-powered geocaching log generator with multi-provider LLM support",
+  "files": [
+    "dist/"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/dpuscher/ai-cache-log.git"
+    "url": "https://github.com/dpuscher/ai-logger.git"
   },
   "bugs": {
-    "url": "https://github.com/dpuscher/ai-cache-log/issues"
+    "url": "https://github.com/dpuscher/ai-logger/issues"
   },
-  "homepage": "https://github.com/dpuscher/ai-cache-log#readme",
+  "homepage": "https://github.com/dpuscher/ai-logger#readme",
   "engines": {
     "node": ">=22"
   },
@@ -35,7 +38,6 @@
   "dependencies": {
     "chalk": "^5.4.1",
     "clipboardy": "^4.0.0",
-    "dotenv": "^16.4.7",
     "inquirer": "^12.3.0",
     "openai": "^6.25.0",
     "ora": "^8.1.1",
@@ -49,7 +51,10 @@
     "@biomejs/biome": "1.9.4",
     "@lavamoat/allow-scripts": "^3.3.4",
     "@lavamoat/preinstall-always-fail": "^2.1.1",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
     "@types/node": "^22.9.0",
+    "semantic-release": "^25.0.3",
     "tsx": "^4.19.2",
     "typescript": "^5.5.4"
   },
