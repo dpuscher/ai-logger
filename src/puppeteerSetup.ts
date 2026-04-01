@@ -108,7 +108,7 @@ export const handleCookiebotOverlay = async (page: Page): Promise<void> => {
   const spinner = ora(chalk.blue("Checking for Cookiebot overlay...")).start();
   try {
     await page.waitForSelector("#CybotCookiebotDialogBodyLevelButtonLevelOptinDeclineAll", {
-      timeout: 2000,
+      timeout: 500,
     });
     await page.click("#CybotCookiebotDialogBodyLevelButtonLevelOptinDeclineAll");
     spinner.succeed(chalk.green('Clicked "Necessary" on Cookiebot overlay.'));
@@ -133,7 +133,7 @@ export const doLogin = async (page: Page, username: string, password: string): P
   for (let i = 0; i < usernameLength; i++) {
     await page.keyboard.press("Backspace");
   }
-  await page.type(usernameSelector, username, { delay: 50 });
+  await page.type(usernameSelector, username, { delay: 20 });
 
   await page.waitForSelector(passwordSelector);
   const passwordLength = await page.$eval(
@@ -143,8 +143,8 @@ export const doLogin = async (page: Page, username: string, password: string): P
   for (let i = 0; i < passwordLength; i++) {
     await page.keyboard.press("Backspace");
   }
-  await page.type(passwordSelector, password, { delay: 50 });
+  await page.type(passwordSelector, password, { delay: 20 });
 
   await page.click("#SignIn");
-  await page.waitForNavigation({ waitUntil: "networkidle2" });
+  await page.waitForNavigation({ waitUntil: "domcontentloaded" });
 };
