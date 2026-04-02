@@ -40,7 +40,7 @@
     "clipboardy": "^4.0.0",
     "inquirer": "^12.3.0",
     "openai": "^6.25.0",
-    "ora": "^8.1.1",
+    "ora": "^9.3.0",
     "puppeteer": "24.40.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-adblocker": "^2.13.6",
