@@ -28,7 +28,11 @@ jobs:
           
           # Try to get the next version from semantic-release (simplified dry-run)
           # We use --dry-run and ignore the push error to extract the version info
-          NEXT_VER=$(npx semantic-release --dry-run --branches dev 2>&1 | grep -oP 'The next release version is \K[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?' || echo "Calculating...")
+          RAW_VER=$(npx semantic-release --dry-run --branches dev 2>&1 | grep -oP 'The next release version is \K[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?' || echo "Calculating...")
+          
+          # Strip prerelease suffix for "Target Production Version"
+          # e.g., 1.0.0-next.2 -> 1.0.0
+          TARGET_VER=$(echo "$RAW_VER" | sed -E 's/-.*//')
           
           # Construct the PR Body
           PR_BODY=$(cat <<EOF
@@ -37,8 +41,9 @@ jobs:
           This PR is automatically kept in sync with the \`dev\` branch. 
           Merge this to trigger a production release to npm.
           
-          ### 📦 Planned Version
-          Next estimated version: **$NEXT_VER**
+          ### 📦 Version Info
+          - **Target Production Version:** \`$TARGET_VER\`
+          - **Current Prerelease:** \`$RAW_VER\`
           
           ### 📝 Changes in this release
           $COMMITS
