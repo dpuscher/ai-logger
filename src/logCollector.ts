@@ -23,11 +23,11 @@ export const collectFoundLogs = async (page: Page, minCount: number): Promise<Lo
     const { foundLogs, hasPublishedLog } = await fetchLogs(page);
     const previousCount = logs.length;
     logs = mergeLogs(logs, foundLogs);
-    
+
     spinner.text = `Scroll #${attempts + 1}: we have ${chalk.magenta(logs.length)} "Found" logs.`;
 
     if (hasPublishedLog) {
-      spinner.info(chalk.gray(" Reached \"Published\" log. Stopping collection."));
+      spinner.info(chalk.gray(' Reached "Published" log. Stopping collection.'));
       reachedEnd = true;
       break;
     }
@@ -61,18 +61,18 @@ export const collectFoundLogs = async (page: Page, minCount: number): Promise<Lo
     } catch {
       // timeout - maybe it didn't trigger because we are at the end?
     }
-    
+
     // Check if we actually got new logs
     const { foundLogs: afterScrollLogs } = await fetchLogs(page);
     const updatedLogs = mergeLogs(logs, afterScrollLogs);
-    
+
     if (updatedLogs.length === logs.length) {
       // Try one more aggressive scroll to the very bottom
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
       await sleep(2000);
       const { foundLogs: finalCheck } = await fetchLogs(page);
       logs = mergeLogs(logs, finalCheck);
-      
+
       if (logs.length === previousCount && attempts > 0) {
         spinner.info(chalk.gray(" No more logs found after multiple attempts."));
         reachedEnd = true;
@@ -90,21 +90,23 @@ export const collectFoundLogs = async (page: Page, minCount: number): Promise<Lo
   } else {
     spinner.warn(chalk.yellow(`Stopped after ${attempts} attempts with ${logs.length} logs.`));
   }
-  
+
   return logs;
 };
 
 /**
  * Grab logs from the DOM and identify if we reached the beginning (Published log)
  */
-const fetchLogs = async (page: Page): Promise<{ foundLogs: LogItem[], hasPublishedLog: boolean }> => {
+const fetchLogs = async (
+  page: Page,
+): Promise<{ foundLogs: LogItem[]; hasPublishedLog: boolean }> => {
   return page.$$eval("#cache_logs_table tr.log-row", (rows: Element[]) => {
     let hasPublishedLog = false;
     const foundLogs = rows
       .map(row => {
         const typeImg = row.querySelector<HTMLImageElement>(".LogType img");
         const logTypeUrl = typeImg?.getAttribute("src")?.trim() || "";
-        
+
         // Log types: 2 = Found, 24 = Published
         if (logTypeUrl.endsWith("/logtypes/24.png")) {
           hasPublishedLog = true;
@@ -126,7 +128,7 @@ const fetchLogs = async (page: Page): Promise<{ foundLogs: LogItem[], hasPublish
         return { user, date, text };
       })
       .filter(Boolean) as LogItem[];
-    
+
     return { foundLogs, hasPublishedLog };
   });
 };

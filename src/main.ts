@@ -9,11 +9,7 @@ import { getConfig } from "./config.js";
 import { fetchDraftInfos } from "./draftReader.js";
 import { collectFoundLogs } from "./logCollector.js";
 import type { AIConfig } from "./openAiHelper.js";
-import {
-  checkLoggingRequirements,
-  generateLogEntry,
-  refineLogEntry,
-} from "./openAiHelper.js";
+import { checkLoggingRequirements, generateLogEntry, refineLogEntry } from "./openAiHelper.js";
 import {
   doLogin,
   handleCookiebotOverlay,
@@ -22,11 +18,7 @@ import {
   saveCookies,
 } from "./puppeteerSetup.js";
 import { runSettingsWizard } from "./settings.js";
-import {
-  askUserForPersonalNotes,
-  openInDefaultBrowser,
-  promptUserForCacheCode,
-} from "./utils.js";
+import { askUserForPersonalNotes, openInDefaultBrowser, promptUserForCacheCode } from "./utils.js";
 
 // Handles login if the current page is the sign-in page.
 // Geocaching.com sets ReturnUrl, so after successful login we land on the original target.
@@ -96,8 +88,7 @@ const navigateWithRetries = async (
 
       // Cache pages load for anonymous users too, so check auth via injected JS variable
       const isLoggedIn = await page.evaluate(
-        () =>
-          (window as unknown as { isLoggedIn: boolean }).isLoggedIn === true,
+        () => (window as unknown as { isLoggedIn: boolean }).isLoggedIn === true,
       );
       if (!isLoggedIn) {
         const returnPath = new URL(url).pathname;
@@ -121,7 +112,7 @@ const navigateWithRetries = async (
           `Navigation attempt ${i + 1}/${attempts} failed (waitUntil=${waitUntil}). Retrying in ${backoffMs}ms...`,
         ),
       );
-      await new Promise((res) => setTimeout(res, backoffMs));
+      await new Promise(res => setTimeout(res, backoffMs));
     }
   }
   throw lastError;
@@ -143,14 +134,7 @@ const runCachingSession = async (
         console.log(chalk.gray("No code entered. Exiting."));
         break;
       }
-      await runSingleWorkflow(
-        page,
-        aiConfig,
-        code,
-        null,
-        geocachingUsername,
-        geocachingPassword,
-      );
+      await runSingleWorkflow(page, aiConfig, code, null, geocachingUsername, geocachingPassword);
       const { again } = await inquirer.prompt<{ again: boolean }>([
         {
           type: "confirm",
@@ -182,9 +166,7 @@ const runCachingSession = async (
     }
     console.log(chalk.cyan(`Found ${draftInfos.length} drafts:`));
     for (let i = 0; i < draftInfos.length; i++) {
-      console.log(
-        `  ${chalk.magenta(draftInfos[i].code)} – ${chalk.green(draftInfos[i].name)}`,
-      );
+      console.log(`  ${chalk.magenta(draftInfos[i].code)} – ${chalk.green(draftInfos[i].name)}`);
     }
 
     const { proceed } = await inquirer.prompt<{ proceed: boolean }>({
@@ -240,9 +222,7 @@ const displayLog = async (
   logType: "AI-Suggested" | "Refined",
   findCount: number | undefined,
 ) => {
-  console.log(
-    chalk.magentaBright(`\n=== ${logType} Log Entry for "${cacheName}" ===\n`),
-  );
+  console.log(chalk.magentaBright(`\n=== ${logType} Log Entry for "${cacheName}" ===\n`));
   console.log(logContent);
   console.log(`\nTFTC! (#${(findCount ?? 0) + 1})`);
 };
@@ -257,17 +237,9 @@ const runSingleWorkflow = async (
 ) => {
   const personalNotes = await askUserForPersonalNotes();
 
-  const spinnerCache = ora(
-    chalk.blue(`Loading geocache page for code: ${code}...`),
-  ).start();
+  const spinnerCache = ora(chalk.blue(`Loading geocache page for code: ${code}...`)).start();
   const cacheUrl = `https://www.geocaching.com/geocache/${code}`;
-  await navigateWithRetries(
-    page,
-    cacheUrl,
-    geocachingUsername,
-    geocachingPassword,
-    3,
-  );
+  await navigateWithRetries(page, cacheUrl, geocachingUsername, geocachingPassword, 3);
   spinnerCache.succeed(chalk.green(`Geocache page loaded for code: ${code}.`));
 
   let cacheName = "";
@@ -282,28 +254,19 @@ const runSingleWorkflow = async (
   }
   try {
     await page
-      .waitForSelector(
-        "#ctl00_ContentBody_ShortDescription, #ctl00_ContentBody_LongDescription",
-        { timeout: 5_000 },
-      )
+      .waitForSelector("#ctl00_ContentBody_ShortDescription, #ctl00_ContentBody_LongDescription", {
+        timeout: 5_000,
+      })
       .catch(() => {});
     cacheDescription = await page.evaluate(() => {
       const short =
-        document
-          .querySelector("#ctl00_ContentBody_ShortDescription")
-          ?.textContent?.trim() || "";
+        document.querySelector("#ctl00_ContentBody_ShortDescription")?.textContent?.trim() || "";
       const long =
-        document
-          .querySelector("#ctl00_ContentBody_LongDescription")
-          ?.textContent?.trim() || "";
+        document.querySelector("#ctl00_ContentBody_LongDescription")?.textContent?.trim() || "";
       return [short, long].filter(Boolean).join("\n\n").slice(0, 2000);
     });
     if (cacheDescription) {
-      console.log(
-        chalk.gray(
-          `  Cache description found (${cacheDescription.length} chars).`,
-        ),
-      );
+      console.log(chalk.gray(`  Cache description found (${cacheDescription.length} chars).`));
     }
   } catch {
     // description is optional
@@ -325,14 +288,10 @@ const runSingleWorkflow = async (
     findCount = await page.evaluate((): number | undefined => {
       try {
         const usernameEl = document.querySelector("header nav .username");
-        if (!usernameEl || !(usernameEl as HTMLElement).parentElement)
-          return undefined;
+        if (!usernameEl || !(usernameEl as HTMLElement).parentElement) return undefined;
         const parent = (usernameEl as HTMLElement).parentElement as HTMLElement;
         const lastChild = parent.lastChild as ChildNode | null;
-        const raw =
-          (lastChild && (lastChild as Text).textContent) ||
-          parent.textContent ||
-          "";
+        const raw = (lastChild && (lastChild as Text).textContent) || parent.textContent || "";
         const cleaned = raw.replaceAll(/[\.,]/g, "");
         const n = Number.parseInt(cleaned, 10);
         return Number.isFinite(n) ? n : undefined;
@@ -353,11 +312,7 @@ const runSingleWorkflow = async (
     console.log();
   }
 
-  console.log(
-    chalk.magentaBright(
-      `\n=== AI-Suggested Log Entry for "${cacheName}" ===\n`,
-    ),
-  );
+  console.log(chalk.magentaBright(`\n=== AI-Suggested Log Entry for "${cacheName}" ===\n`));
   const initialLog = await generateLogEntry(
     aiConfig,
     cacheName,
@@ -398,9 +353,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
-const pkg = JSON.parse(
-  readFileSync(join(__dirname, "../package.json"), "utf8"),
-);
+const pkg = JSON.parse(readFileSync(join(__dirname, "../package.json"), "utf8"));
 
 const printBanner = (config: ReturnType<typeof getConfig>) => {
   // ... rest of printBanner ...
@@ -438,9 +391,7 @@ Environment Variables:
   if (!config.apiKey) {
     console.log();
     console.log(chalk.greenBright.bold("  Welcome to ai-logger"));
-    console.log(
-      chalk.yellow("\n  No API key configured. Let's set up your settings.\n"),
-    );
+    console.log(chalk.yellow("\n  No API key configured. Let's set up your settings.\n"));
     await runSettingsWizard();
     config = getConfig();
   }
@@ -490,7 +441,7 @@ Environment Variables:
   }
 };
 
-main().catch((err) => {
+main().catch(err => {
   console.error(chalk.red("Fatal error:"), err);
   process.exit(1);
 });
