@@ -28,7 +28,10 @@ jobs:
           
           # Try to get the next version from semantic-release (simplified dry-run)
           # We use --dry-run and ignore the push error to extract the version info
-          RAW_VER=$(npx semantic-release --dry-run --branches dev 2>&1 | grep -oP 'The next release version is \K[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?' || echo "Calculating...")
+          # Use sed for more portable version extraction
+          RAW_VER=$(npx semantic-release --dry-run --branches dev 2>&1 | sed -n 's/.*The next release version is \([0-9.]*[-a-zA-Z0-9.]*\).*/\1/p' | head -n 1 || echo "Calculating...")
+          
+          if [ -z "$RAW_VER" ]; then RAW_VER="Calculating..."; fi
           
           # Strip prerelease suffix for "Target Production Version"
           # e.g., 1.0.0-next.2 -> 1.0.0
@@ -63,7 +66,7 @@ jobs:
               --base main \
               --title "🚀 Release Candidate: dev -> main" \
               --body "$PR_BODY" \
-              --label "autorelease"
+              --draft
           else
             echo "Updating PR #$PR_EXISTS description..."
             gh pr edit "$PR_EXISTS" --body "$PR_BODY"
