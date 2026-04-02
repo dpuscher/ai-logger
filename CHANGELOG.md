@@ -1,3 +1,10 @@
+# [1.0.0-next.3](https://github.com/dpuscher/ai-logger/compare/v1.0.0-next.2...v1.0.0-next.3) (2026-04-02)
+
+
+### Bug Fixes
+
+* **ci:** fix linting errors and non-null assertion ([6b1582a](https://github.com/dpuscher/ai-logger/commit/6b1582ae36eb36adda7a960ae630e53b0b19b0c3))
+
 # [1.0.0-next.2](https://github.com/dpuscher/ai-logger/compare/v1.0.0-next.1...v1.0.0-next.2) (2026-04-02)
 
 

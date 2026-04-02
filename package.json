@@ -1,6 +1,6 @@
 {
   "name": "ai-logger",
-  "version": "1.0.0-next.2",
+  "version": "1.0.0-next.3",
   "main": "dist/main.js",
   "type": "module",
   "scripts": {
@@ -15,7 +15,9 @@
   "author": "dpuscher",
   "license": "ISC",
   "description": "AI-powered geocaching log generator with multi-provider LLM support",
-  "files": ["dist/"],
+  "files": [
+    "dist/"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/dpuscher/ai-logger.git"
@@ -27,7 +29,12 @@
   "engines": {
     "node": ">=22"
   },
-  "keywords": ["ai", "geocache", "log", "geocaching"],
+  "keywords": [
+    "ai",
+    "geocache",
+    "log",
+    "geocaching"
+  ],
   "dependencies": {
     "chalk": "^5.4.1",
     "clipboardy": "^4.0.0",
