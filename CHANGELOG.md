@@ -1,3 +1,10 @@
+# [1.0.0-next.2](https://github.com/dpuscher/ai-logger/compare/v1.0.0-next.1...v1.0.0-next.2) (2026-04-02)
+
+
+### Bug Fixes
+
+* **ci:** remove non-existent label and fix version extraction in PR sync ([125e9ea](https://github.com/dpuscher/ai-logger/commit/125e9eadbe3b5afddecc001fe402800ac7ffa48f))
+
 # 1.0.0-next.1 (2026-04-01)
 
 
