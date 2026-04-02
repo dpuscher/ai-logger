@@ -1781,7 +1781,7 @@ __metadata:
     inquirer: "npm:^12.3.0"
     openai: "npm:^6.25.0"
     ora: "npm:^8.1.1"
-    puppeteer: "npm:^24.40.0"
+    puppeteer: "npm:24.40.0"
     puppeteer-extra: "npm:^3.3.6"
     puppeteer-extra-plugin-adblocker: "npm:^2.13.6"
     puppeteer-extra-plugin-block-resources: "npm:^2.4.3"
@@ -5753,7 +5753,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"puppeteer@npm:^24.40.0":
+"puppeteer@npm:24.40.0":
   version: 24.40.0
   resolution: "puppeteer@npm:24.40.0"
   dependencies:
