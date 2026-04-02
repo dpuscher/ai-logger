@@ -1,7 +1,7 @@
-import chalk from "chalk";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import chalk from "chalk";
 import inquirer from "inquirer";
 
 const CONFIG_DIR = path.join(os.homedir(), ".ai-logger");
@@ -61,7 +61,10 @@ export const runSettingsWizard = async (): Promise<AppConfig> => {
     default: existing.provider ?? "OpenRouter",
   });
 
-  const selectedProvider = PROVIDERS.find(p => p.name === providerName)!;
+  const selectedProvider = PROVIDERS.find(p => p.name === providerName);
+  if (!selectedProvider) {
+    throw new Error(`Provider ${providerName} not found`);
+  }
   let apiBaseUrl = selectedProvider.baseUrl;
 
   if (providerName === "Custom") {
@@ -70,7 +73,7 @@ export const runSettingsWizard = async (): Promise<AppConfig> => {
       name: "customUrl",
       message: "Enter API base URL:",
       default: existing.apiBaseUrl ?? "",
-      validate: (val: string) => val.trim() ? true : "URL is required",
+      validate: (val: string) => (val.trim() ? true : "URL is required"),
     });
     apiBaseUrl = customUrl.trim();
   }
@@ -80,7 +83,7 @@ export const runSettingsWizard = async (): Promise<AppConfig> => {
     name: "model",
     message: "Enter model name:",
     default: existing.model ?? "",
-    validate: (val: string) => val.trim() ? true : "Model name is required",
+    validate: (val: string) => (val.trim() ? true : "Model name is required"),
   });
 
   let apiKey = "";
@@ -123,4 +126,3 @@ export const runSettingsWizard = async (): Promise<AppConfig> => {
   console.log(chalk.green("\n✅ Settings saved!\n"));
   return config;
 };
-

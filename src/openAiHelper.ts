@@ -1,5 +1,5 @@
-import OpenAI from "openai";
 import chalk from "chalk";
+import OpenAI from "openai";
 import ora from "ora";
 import type { LogItem } from "./logCollector.js";
 
@@ -20,26 +20,22 @@ const createClient = (config: AIConfig) =>
   });
 
 const analyzePriorLogs = (texts: string[]) => {
-  const wordCounts = texts.map((t) => t.split(/\s+/).filter(Boolean).length);
+  const wordCounts = texts.map(t => t.split(/\s+/).filter(Boolean).length);
   const avgWords = wordCounts.length
     ? wordCounts.reduce((a, b) => a + b, 0) / wordCounts.length
     : 0;
   const shortRatio = wordCounts.length
-    ? wordCounts.filter((w) => w <= 20).length / wordCounts.length
+    ? wordCounts.filter(w => w <= 20).length / wordCounts.length
     : 0;
-  const lowerTexts = texts.map((t) => t.toLowerCase());
+  const lowerTexts = texts.map(t => t.toLowerCase());
   const tftcRatio = lowerTexts.length
-    ? lowerTexts.filter((t) => /\btftc\b/.test(t)).length / lowerTexts.length
+    ? lowerTexts.filter(t => /\btftc\b/.test(t)).length / lowerTexts.length
     : 0;
   const quickEasyRatio = lowerTexts.length
-    ? lowerTexts.filter((t) => /(quick|schnell|easy|einfach|kurz)\b/.test(t))
-        .length / lowerTexts.length
+    ? lowerTexts.filter(t => /(quick|schnell|easy|einfach|kurz)\b/.test(t)).length /
+      lowerTexts.length
     : 0;
-  const isSimple =
-    avgWords < 30 ||
-    shortRatio > 0.5 ||
-    tftcRatio > 0.2 ||
-    quickEasyRatio > 0.35;
+  const isSimple = avgWords < 30 || shortRatio > 0.5 || tftcRatio > 0.2 || quickEasyRatio > 0.35;
   return { avgWords, shortRatio, tftcRatio, quickEasyRatio, isSimple };
 };
 
@@ -97,11 +93,9 @@ export const generateLogEntry = async (
   ).start();
   const client = createClient(config);
   const subset = logs.slice(0, 30);
-  const logsText = subset
-    .map((l, i) => `[Log #${i + 1}]: ${l.text}`)
-    .join("\n\n");
+  const logsText = subset.map((l, i) => `[Log #${i + 1}]: ${l.text}`).join("\n\n");
 
-  const analysis = analyzePriorLogs(subset.map((s) => s.text));
+  const analysis = analyzePriorLogs(subset.map(s => s.text));
 
   const targetLength =
     analysis.avgWords < 20 && analysis.shortRatio > 0.6
@@ -110,7 +104,8 @@ export const generateLogEntry = async (
         ? "40–60 words"
         : "60–100 words";
 
-  const systemPrompt = `You are a geocaching log writer. You write authentic, first-person log entries in the style and language of the prior logs provided. You always follow the exact word count target given.`;
+  const systemPrompt =
+    "You are a geocaching log writer. You write authentic, first-person log entries in the style and language of the prior logs provided. You always follow the exact word count target given.";
 
   const userPrompt = `Write a geocaching log entry for cache "${cacheName}".
 
@@ -146,19 +141,13 @@ Output only the final log text. No headings, no quotes, no explanations.`.trim()
 
   try {
     let streamed = false;
-    let content = await chat(
-      client,
-      config.model,
-      userPrompt,
-      systemPrompt,
-      (token) => {
-        if (!streamed) {
-          spinner.stop();
-          streamed = true;
-        }
-        process.stdout.write(token);
-      },
-    );
+    let content = await chat(client, config.model, userPrompt, systemPrompt, token => {
+      if (!streamed) {
+        spinner.stop();
+        streamed = true;
+      }
+      process.stdout.write(token);
+    });
 
     if (streamed) {
       process.stdout.write("\n");
@@ -172,7 +161,7 @@ Output only the final log text. No headings, no quotes, no explanations.`.trim()
     }
 
     if (!content) {
-      const sample = [personalNotes, ...subset.map((s) => s.text)]
+      const sample = [personalNotes, ...subset.map(s => s.text)]
         .filter(Boolean)
         .join(" ")
         .replace(/\s+/g, " ")
@@ -203,7 +192,8 @@ export const checkLoggingRequirements = async (
 
   const spinner = ora(chalk.blue("Checking logging requirements...")).start();
   const client = createClient(config);
-  const systemPrompt = `You extract explicit logging requirements from geocache descriptions. A logging requirement is something the cache owner explicitly asks finders to do in order to log the cache — such as uploading a photo, answering a question, posting a word or code, or contacting the owner. Be thorough: if the description mentions ANY action the logger must take, include it. When in doubt, include it.`;
+  const systemPrompt =
+    "You extract explicit logging requirements from geocache descriptions. A logging requirement is something the cache owner explicitly asks finders to do in order to log the cache — such as uploading a photo, answering a question, posting a word or code, or contacting the owner. Be thorough: if the description mentions ANY action the logger must take, include it. When in doubt, include it.";
 
   const prompt = `Read the following geocache description and list every explicit requirement the logger must fulfill (e.g. upload a photo, answer a question, include a specific word, contact the owner, etc.).
 
