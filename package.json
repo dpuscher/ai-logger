@@ -41,7 +41,7 @@
     "inquirer": "^12.3.0",
     "openai": "^6.25.0",
     "ora": "^8.1.1",
-    "puppeteer": "^23.11.1",
+    "puppeteer": "^24.40.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-adblocker": "^2.13.6",
     "puppeteer-extra-plugin-block-resources": "^2.4.3",
