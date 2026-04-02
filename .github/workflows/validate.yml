@@ -6,11 +6,40 @@ on:
       - main
       - dev
   pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
     branches:
       - main
       - dev
 
 jobs:
+  lint-pr-title:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Semantic Pull Request
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # List of valid types
+          types: |
+            feat
+            fix
+            chore
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            revert
+          # If the PR title contains a scope, it must be lowercase
+          subjectPattern: ^(?![A-Z]).+$
+
   validate:
     runs-on: ubuntu-latest
     env:
