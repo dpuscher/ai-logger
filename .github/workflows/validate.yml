@@ -15,30 +15,21 @@ on:
       - dev
 
 jobs:
-  lint-pr-title:
+  lint-commits:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
-      - name: Semantic Pull Request
-        uses: amannn/action-semantic-pull-request@v5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          # List of valid types
-          types: |
-            feat
-            fix
-            chore
-            docs
-            style
-            refactor
-            perf
-            test
-            build
-            ci
-            revert
-          # If the PR title contains a scope, it must be lowercase
-          subjectPattern: ^(?![A-Z]).+$
+          fetch-depth: 0
+      
+      - name: Commit Lint
+        uses: wagoid/commitlint-github-action@v6
+        with:
+          configFile: commitlint.config.js
+          failOnWarnings: false
+          helpURL: https://github.com/conventional-changelog/commitlint/#what-is-commitlint
 
   validate:
     runs-on: ubuntu-latest
