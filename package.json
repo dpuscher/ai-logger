@@ -9,15 +9,14 @@
     "build": "tsc",
     "prepare": "yarn build",
     "start": "node dist/main.js",
-    "format": "biome check --write --unsafe",
+    "lint": "biome check --write --unsafe",
+    "lint:check": "biome check",
     "setup": "yarn install && yarn allow-scripts"
   },
   "author": "dpuscher",
   "license": "ISC",
   "description": "AI-powered geocaching log generator with multi-provider LLM support",
-  "files": [
-    "dist/"
-  ],
+  "files": ["dist/"],
   "repository": {
     "type": "git",
     "url": "https://github.com/dpuscher/ai-logger.git"
@@ -29,12 +28,7 @@
   "engines": {
     "node": ">=22"
   },
-  "keywords": [
-    "ai",
-    "geocache",
-    "log",
-    "geocaching"
-  ],
+  "keywords": ["ai", "geocache", "log", "geocaching"],
   "dependencies": {
     "chalk": "^5.4.1",
     "clipboardy": "^5.3.1",
