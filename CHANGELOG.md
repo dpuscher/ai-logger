@@ -1,3 +1,11 @@
+## [1.0.1-rc.1](https://github.com/dpuscher/ai-logger/compare/v1.0.0...v1.0.1-rc.1) (2026-04-03)
+
+
+### Bug Fixes
+
+* **ci:** ensure build artifacts are included in release package ([62f5ab5](https://github.com/dpuscher/ai-logger/commit/62f5ab53e97ab9749e05b78188412a801c46fb1b))
+* **ci:** ensure project is built before release ([510c6e3](https://github.com/dpuscher/ai-logger/commit/510c6e37512716e783907d681c4f2c25ca4b68ab))
+
 # 1.0.0 (2026-04-03)
 
 
