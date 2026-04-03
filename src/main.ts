@@ -3,7 +3,7 @@
 import chalk from "chalk";
 import clipboardy from "clipboardy";
 import inquirer from "inquirer";
-import ora from "ora";
+import ora, { type Ora } from "ora";
 import type { Page } from "puppeteer";
 import { getConfig } from "./config.js";
 import { fetchDraftInfos } from "./draftReader.js";
@@ -55,7 +55,6 @@ const loginIfNeeded = async (
 
     const spinnerLogin = ora(chalk.yellow("Logging in...")).start();
     await doLogin(page, credentials.username, credentials.password);
-    await saveCookies(page);
 
     if (page.url().includes("/account/signin")) {
       spinnerLogin.fail(chalk.red("Login failed. Please try again."));
@@ -63,6 +62,7 @@ const loginIfNeeded = async (
       spinnerLogin.succeed(chalk.green("Login successful."));
       loggedIn = true;
     }
+    await saveCookies(page);
   }
 };
 
@@ -73,6 +73,7 @@ const navigateWithRetries = async (
   url: string,
   geocachingUsername: string,
   geocachingPassword: string,
+  spinner?: Ora,
   attempts = 3,
 ): Promise<void> => {
   const strategies: Array<"networkidle2" | "domcontentloaded" | "load"> = [
@@ -92,11 +93,13 @@ const navigateWithRetries = async (
       );
       if (!isLoggedIn) {
         const returnPath = new URL(url).pathname;
+        if (spinner) spinner.stop();
         await page.goto(
           `https://www.geocaching.com/account/signin?ReturnUrl=${encodeURIComponent(returnPath)}`,
           { waitUntil: "domcontentloaded" },
         );
         await loginIfNeeded(page, geocachingUsername, geocachingPassword);
+        if (spinner) spinner.start();
         // After login geocaching.com honors ReturnUrl, so we're back on the cache page
       }
 
@@ -107,12 +110,14 @@ const navigateWithRetries = async (
     } catch (err) {
       lastError = err;
       const backoffMs = 1500 * (i + 1);
+      if (spinner) spinner.stop();
       console.warn(
         chalk.yellow(
           `Navigation attempt ${i + 1}/${attempts} failed (waitUntil=${waitUntil}). Retrying in ${backoffMs}ms...`,
         ),
       );
       await new Promise(res => setTimeout(res, backoffMs));
+      if (spinner) spinner.start();
     }
   }
   throw lastError;
@@ -148,23 +153,24 @@ const runCachingSession = async (
   } else {
     // Navigate directly to drafts — geocaching.com will redirect to sign-in with ReturnUrl
     // set to /account/drafts if we're not authenticated. After login we land back here.
-    const spinnerDraft = ora(chalk.blue("Loading drafts...")).start();
+    const spinnerDraft = ora(chalk.blue("Loading drafts page...")).start();
     await page.goto("https://www.geocaching.com/account/drafts", {
       waitUntil: "domcontentloaded",
     });
     if (page.url().includes("/account/signin")) {
       spinnerDraft.stop();
       await loginIfNeeded(page, geocachingUsername, geocachingPassword);
+    } else {
+      spinnerDraft.succeed(chalk.green("Drafts page loaded."));
     }
-    spinnerDraft.succeed(chalk.green("Drafts page loaded."));
 
     const draftInfos = await fetchDraftInfos(page);
     if (!draftInfos.length) {
-      console.log(chalk.yellow("No drafts found. Exiting."));
       await browser.close();
       return;
     }
-    console.log(chalk.cyan(`Found ${draftInfos.length} drafts:`));
+
+    console.log(chalk.cyan(`\nFound ${draftInfos.length} drafts:`));
     for (let i = 0; i < draftInfos.length; i++) {
       console.log(`  ${chalk.magenta(draftInfos[i].code)} – ${chalk.green(draftInfos[i].name)}`);
     }
@@ -239,7 +245,14 @@ const runSingleWorkflow = async (
 
   const spinnerCache = ora(chalk.blue(`Loading geocache page for code: ${code}...`)).start();
   const cacheUrl = `https://www.geocaching.com/geocache/${code}`;
-  await navigateWithRetries(page, cacheUrl, geocachingUsername, geocachingPassword, 3);
+  await navigateWithRetries(
+    page,
+    cacheUrl,
+    geocachingUsername,
+    geocachingPassword,
+    spinnerCache,
+    3,
+  );
   spinnerCache.succeed(chalk.green(`Geocache page loaded for code: ${code}.`));
 
   let cacheName = "";
@@ -272,10 +285,18 @@ const runSingleWorkflow = async (
     // description is optional
   }
 
-  // Kick off AI requirements check immediately — runs in parallel with log collection
-  const requirementsPromise = cacheDescription
-    ? checkLoggingRequirements(aiConfig, cacheDescription)
-    : Promise.resolve<string[]>([]);
+  // Check logging requirements sequentially to avoid overlapping spinners with log collection
+  const requirements = cacheDescription
+    ? await checkLoggingRequirements(aiConfig, cacheDescription)
+    : [];
+
+  if (requirements.length) {
+    console.log(chalk.yellowBright("\n⚠️  Logging requirements detected:"));
+    for (const req of requirements) {
+      console.log(chalk.yellow(`  • ${req}`));
+    }
+    console.log();
+  }
 
   const logs = await collectFoundLogs(page, 500);
   if (!logs.length) {
@@ -301,15 +322,6 @@ const runSingleWorkflow = async (
     });
   } catch {
     findCount = undefined;
-  }
-
-  const requirements = await requirementsPromise;
-  if (requirements.length) {
-    console.log(chalk.yellowBright("\n⚠️  Logging requirements detected:"));
-    for (const req of requirements) {
-      console.log(chalk.yellow(`  • ${req}`));
-    }
-    console.log();
   }
 
   console.log(chalk.magentaBright(`\n=== AI-Suggested Log Entry for "${cacheName}" ===\n`));

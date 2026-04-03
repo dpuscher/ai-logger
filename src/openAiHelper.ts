@@ -153,6 +153,9 @@ Output only the final log text. No headings, no quotes, no explanations.`.trim()
       process.stdout.write("\n");
     } else {
       spinner.stop();
+      if (content) {
+        console.log(content);
+      }
     }
 
     if (!content) {
@@ -171,6 +174,10 @@ Output only the final log text. No headings, no quotes, no explanations.`.trim()
         ? ` Eindrücke: ${sample}`
         : " Kurze Suche, schöne Location und mit einem Lächeln geloggt.";
       content = `Heute den Cache "${cacheName}" gefunden.${addendum} Vielen Dank an den Owner!`;
+    }
+
+    if (!streamed) {
+      console.log(content);
     }
 
     return content;
