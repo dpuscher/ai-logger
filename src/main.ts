@@ -310,7 +310,7 @@ const runSingleWorkflow = async (
         const parent = (usernameEl as HTMLElement).parentElement as HTMLElement;
         const lastChild = parent.lastChild as ChildNode | null;
         const raw = (lastChild && (lastChild as Text).textContent) || parent.textContent || "";
-        const cleaned = raw.replaceAll(/[\.,]/g, "");
+        const cleaned = raw.replaceAll(/[.,]/g, "");
         const n = Number.parseInt(cleaned, 10);
         return Number.isFinite(n) ? n : undefined;
       } catch {
