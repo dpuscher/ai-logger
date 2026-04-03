@@ -1,3 +1,10 @@
+# [1.0.0-rc.4](https://github.com/dpuscher/ai-logger/compare/v1.0.0-rc.3...v1.0.0-rc.4) (2026-04-03)
+
+
+### Bug Fixes
+
+* **ci:** robust version extraction for PR sync ([293f94d](https://github.com/dpuscher/ai-logger/commit/293f94df41f97b0e810d4aa33ba699b92d159ed0))
+
 # [1.0.0-rc.3](https://github.com/dpuscher/ai-logger/compare/v1.0.0-rc.2...v1.0.0-rc.3) (2026-04-03)
 
 
