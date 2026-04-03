@@ -1778,7 +1778,7 @@ __metadata:
     "@semantic-release/git": "npm:^10.0.1"
     "@types/node": "npm:^22.9.0"
     chalk: "npm:^5.4.1"
-    clipboardy: "npm:^4.0.0"
+    clipboardy: "npm:^5.3.1"
     inquirer: "npm:^13.3.2"
     openai: "npm:^6.25.0"
     ora: "npm:^9.3.0"
@@ -2290,14 +2290,28 @@ __metadata:
   languageName: node
   linkType: hard
 
-"clipboardy@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "clipboardy@npm:4.0.0"
+"clipboard-image@npm:^0.1.0":
+  version: 0.1.0
+  resolution: "clipboard-image@npm:0.1.0"
   dependencies:
-    execa: "npm:^8.0.1"
+    run-jxa: "npm:^3.0.0"
+  bin:
+    clipboard-image: cli.js
+  checksum: 10c0/d2cacc3471721e5d17c4c461621f09e73b1267e6c53e4d8e449e328f9da367b2629137f3ee2e5a819ec534557da4fa1ed3a7e254891f0345e685f00c603fa230
+  languageName: node
+  linkType: hard
+
+"clipboardy@npm:^5.3.1":
+  version: 5.3.1
+  resolution: "clipboardy@npm:5.3.1"
+  dependencies:
+    clipboard-image: "npm:^0.1.0"
+    execa: "npm:^9.6.1"
+    is-wayland: "npm:^0.1.0"
     is-wsl: "npm:^3.1.0"
     is64bit: "npm:^2.0.0"
-  checksum: 10c0/02bb5f3d0a772bd84ec26a3566c72c2319a9f3b4cb8338370c3bffcf0073c80b834abe1a6945bea4f2cbea28e1627a975aaac577e3f61a868d924ce79138b041
+    powershell-utils: "npm:^0.2.0"
+  checksum: 10c0/3ca79dd0c972ac430e65480965e89ab325889db2bb43e75703a218d80e881c22f13cc59b9425c36d66c260f2d9387a6f42563f25f3453506f075a0273762c180
   languageName: node
   linkType: hard
 
@@ -2876,7 +2890,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"escape-string-regexp@npm:5.0.0":
+"escape-string-regexp@npm:5.0.0, escape-string-regexp@npm:^5.0.0":
   version: 5.0.0
   resolution: "escape-string-regexp@npm:5.0.0"
   checksum: 10c0/6366f474c6f37a802800a435232395e04e9885919873e382b157ab7e8f0feb8fed71497f84a6f6a81a49aab41815522f5839112bd38026d203aea0c91622df95
@@ -2932,7 +2946,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"execa@npm:^5.0.0":
+"execa@npm:^5.0.0, execa@npm:^5.1.1":
   version: 5.1.1
   resolution: "execa@npm:5.1.1"
   dependencies:
@@ -2949,7 +2963,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"execa@npm:^8.0.0, execa@npm:^8.0.1":
+"execa@npm:^8.0.0":
   version: 8.0.1
   resolution: "execa@npm:8.0.1"
   dependencies:
@@ -2966,7 +2980,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"execa@npm:^9.0.0":
+"execa@npm:^9.0.0, execa@npm:^9.6.1":
   version: 9.6.1
   resolution: "execa@npm:9.6.1"
   dependencies:
@@ -3864,6 +3878,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"is-wayland@npm:^0.1.0":
+  version: 0.1.0
+  resolution: "is-wayland@npm:0.1.0"
+  checksum: 10c0/3eb9e757e2506b160c4f5746d510baa199c8ca2b6a44ba02e42f0e63787cf0dc1ab2c49e177642e0b14f3bf3ff97cb8518bda976ab7c0a670ba4c1e41f5f2ae7
+  languageName: node
+  linkType: hard
+
 "is-wsl@npm:^3.1.0":
   version: 3.1.0
   resolution: "is-wsl@npm:3.1.0"
@@ -4358,6 +4379,15 @@ __metadata:
   version: 7.18.3
   resolution: "lru-cache@npm:7.18.3"
   checksum: 10c0/b3a452b491433db885beed95041eb104c157ef7794b9c9b4d647be503be91769d11206bb573849a16b4cc0d03cbd15ffd22df7960997788b74c1d399ac7a4fed
+  languageName: node
+  linkType: hard
+
+"macos-version@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "macos-version@npm:6.0.0"
+  dependencies:
+    semver: "npm:^7.3.5"
+  checksum: 10c0/7c60c22d26c5eb3451d404b35fc404dc018e6491b0cc9730db76be16d1c570373260dcc8560ff2a78112314d569e4801e3e0b577c89f7309fd9887060d4ad1fe
   languageName: node
   linkType: hard
 
@@ -5485,6 +5515,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"powershell-utils@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "powershell-utils@npm:0.2.0"
+  checksum: 10c0/0fa649e933800f33276262646cfb0d2ffcdfdb6a68ff80f5ab66e33c3197d3edf022e774502d5e458aee683702994e6d201fda85958c3cb7ccc413e0746b4373
+  languageName: node
+  linkType: hard
+
 "pretty-ms@npm:^9.2.0":
   version: 9.3.0
   resolution: "pretty-ms@npm:9.3.0"
@@ -5992,6 +6029,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"run-jxa@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "run-jxa@npm:3.0.0"
+  dependencies:
+    execa: "npm:^5.1.1"
+    macos-version: "npm:^6.0.0"
+    subsume: "npm:^4.0.0"
+    type-fest: "npm:^2.0.0"
+  checksum: 10c0/f9edf02b9370c1a081ba97b8afe0fd63b871eb523c2e3b97d817b1baba34c36ce75a4c68dc24d241557d77331d10354a2cf66e258ef0638fef8a4d040929e120
+  languageName: node
+  linkType: hard
+
 "rxjs@npm:^7.8.2":
   version: 7.8.2
   resolution: "rxjs@npm:7.8.2"
@@ -6412,6 +6461,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"subsume@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "subsume@npm:4.0.0"
+  dependencies:
+    escape-string-regexp: "npm:^5.0.0"
+    unique-string: "npm:^3.0.0"
+  checksum: 10c0/f77349c6e1216ebd9142d6b2c2a3c4f9bb09c374f95893b5deb3f009381f58d8c71b61bcf9d5a37e732759785c690db86a1e13499daa3fb378a6adb0a2bfafd0
+  languageName: node
+  linkType: hard
+
 "super-regex@npm:^1.0.0":
   version: 1.1.0
   resolution: "super-regex@npm:1.1.0"
@@ -6757,7 +6816,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"type-fest@npm:^2.12.2":
+"type-fest@npm:^2.0.0, type-fest@npm:^2.12.2":
   version: 2.19.0
   resolution: "type-fest@npm:2.19.0"
   checksum: 10c0/a5a7ecf2e654251613218c215c7493574594951c08e52ab9881c9df6a6da0aeca7528c213c622bc374b4e0cb5c443aa3ab758da4e3c959783ce884c3194e12cb

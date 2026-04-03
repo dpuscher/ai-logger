@@ -37,7 +37,7 @@
   ],
   "dependencies": {
     "chalk": "^5.4.1",
-    "clipboardy": "^4.0.0",
+    "clipboardy": "^5.3.1",
     "inquirer": "^13.3.2",
     "openai": "^6.25.0",
     "ora": "^9.3.0",
