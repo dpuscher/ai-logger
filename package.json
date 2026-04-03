@@ -61,7 +61,7 @@
     "@lavamoat/preinstall-always-fail": "^3.0.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
-    "@types/node": "^22.9.0",
+    "@types/node": "^25.5.2",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "semantic-release": "^25.0.3",
