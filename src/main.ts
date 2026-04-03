@@ -356,7 +356,28 @@ const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const pkg = JSON.parse(readFileSync(join(__dirname, "../package.json"), "utf8"));
 
 const printBanner = (config: ReturnType<typeof getConfig>) => {
-  // ... rest of printBanner ...
+  const providerLabel = config.apiBaseUrl.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  const modelLabel = config.model || chalk.dim("(no model)");
+  const subtitle = `${chalk.dim(providerLabel)}  ·  ${chalk.dim(modelLabel)}`;
+
+  const inner = "  ai-logger  ";
+  const width =
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: needed to strip ANSI codes for width calculation
+    Math.max(inner.length, subtitle.replace(/\u001b\[[0-9;]*m/g, "").length) + 4;
+  const pad = (s: string, w: number) => {
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: needed to strip ANSI codes for width calculation
+    const visible = s.replace(/\u001b\[[0-9;]*m/g, "").length;
+    return s + " ".repeat(Math.max(0, w - visible));
+  };
+
+  console.log();
+  console.log(chalk.green(` ┌${"─".repeat(width)}┐`));
+  console.log(
+    chalk.green(" │") + chalk.greenBright.bold(pad(`  ${inner}`, width)) + chalk.green("│"),
+  );
+  console.log(chalk.green(" │") + pad(`  ${subtitle}`, width) + chalk.green("│"));
+  console.log(chalk.green(` └${"─".repeat(width)}┘`));
+  console.log();
 };
 
 const main = async () => {
