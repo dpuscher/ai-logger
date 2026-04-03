@@ -1,3 +1,10 @@
+# [1.0.0-rc.5](https://github.com/dpuscher/ai-logger/compare/v1.0.0-rc.4...v1.0.0-rc.5) (2026-04-03)
+
+
+### Bug Fixes
+
+* **ci:** grant write permissions for PR sync version calculation ([d12c773](https://github.com/dpuscher/ai-logger/commit/d12c77393c12c08c39afc5529824d6b6e11cd13e))
+
 # [1.0.0-rc.4](https://github.com/dpuscher/ai-logger/compare/v1.0.0-rc.3...v1.0.0-rc.4) (2026-04-03)
 
 
