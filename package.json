@@ -77,7 +77,7 @@
     "allowScripts": {
       "@biomejs/biome": false,
       "@lavamoat/preinstall-always-fail": false,
-      "puppeteer": false,
+      "puppeteer": true,
       "tsx>esbuild": false
     }
   }

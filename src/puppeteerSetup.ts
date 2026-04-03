@@ -1,7 +1,9 @@
+import { execSync } from "node:child_process";
 import fs from "node:fs";
 import chalk from "chalk";
+import inquirer from "inquirer";
 import ora from "ora";
-import { DEFAULT_INTERCEPT_RESOLUTION_PRIORITY, type Page } from "puppeteer";
+import { type Browser, DEFAULT_INTERCEPT_RESOLUTION_PRIORITY, type Page } from "puppeteer";
 import puppeteer from "puppeteer-extra";
 import AdblockerPlugin from "puppeteer-extra-plugin-adblocker";
 import BlockResourcesPlugin from "puppeteer-extra-plugin-block-resources";
@@ -36,7 +38,7 @@ puppeteer.use(
 /**
  * Launch Puppeteer
  */
-export const launchPuppeteer = async () => {
+export const launchPuppeteer = async (): Promise<{ browser: Browser; page: Page }> => {
   const spinner = ora(chalk.blue("Launching Puppeteer...")).start();
   try {
     // @ts-expect-error - Types of plugin are wrong
@@ -59,6 +61,36 @@ export const launchPuppeteer = async () => {
     spinner.succeed(chalk.green("Puppeteer launched successfully!"));
     return { browser, page };
   } catch (err) {
+    if (err instanceof Error && err.message?.includes("Could not find Chrome")) {
+      spinner.fail(chalk.red("Chrome browser not found."));
+
+      const { shouldInstall } = await inquirer.prompt<{ shouldInstall: boolean }>([
+        {
+          type: "confirm",
+          name: "shouldInstall",
+          message: "Chrome is required but not found. Would you like to install it now?",
+          default: true,
+        },
+      ]);
+
+      if (shouldInstall) {
+        const installSpinner = ora(
+          chalk.blue("Installing Chrome... (this may take a minute)"),
+        ).start();
+        try {
+          execSync("npx puppeteer browsers install chrome", { stdio: "ignore" });
+          installSpinner.succeed(chalk.green("Chrome installed successfully!"));
+          return launchPuppeteer(); // Retry
+        } catch (installErr) {
+          installSpinner.fail(chalk.red(`Failed to install Chrome: ${installErr}`));
+          process.exit(1);
+        }
+      } else {
+        console.log(chalk.yellow("Cannot continue without Chrome. Exiting."));
+        process.exit(1);
+      }
+    }
+
     spinner.fail(chalk.red(`Failed to launch Puppeteer: ${err}`));
     process.exit(1);
   }
