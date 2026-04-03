@@ -47,8 +47,10 @@ jobs:
           
           # Try to get the next version from semantic-release (simplified dry-run)
           # We use --dry-run and ignore the push error to extract the version info
-          # Improved regex to stop at first space or line end
-          RAW_VER=$(npx semantic-release --dry-run --branches dev 2>&1 | grep -oP 'The next release version is \K[0-9.a-zA-Z-]+' | head -n 1)
+          # Improved extraction by capturing output to a file first
+          npx semantic-release --dry-run --branches dev > sr_output.txt 2>&1 || true
+          cat sr_output.txt
+          RAW_VER=$(grep -oP 'The next release version is \K[0-9.a-zA-Z-]+' sr_output.txt | head -n 1)
           
           if [ -z "$RAW_VER" ] || [ "$RAW_VER" = "null" ]; then RAW_VER="Calculating..."; fi
           
