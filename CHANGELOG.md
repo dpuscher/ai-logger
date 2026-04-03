@@ -1,3 +1,10 @@
+## [1.0.1-rc.2](https://github.com/dpuscher/ai-logger/compare/v1.0.1-rc.1...v1.0.1-rc.2) (2026-04-03)
+
+
+### Bug Fixes
+
+* **ci:** fix sync-pr version detection and arrow character ([c43bf37](https://github.com/dpuscher/ai-logger/commit/c43bf3789f842c31afad22a749c1b283430bd553))
+
 ## [1.0.1-rc.1](https://github.com/dpuscher/ai-logger/compare/v1.0.0...v1.0.1-rc.1) (2026-04-03)
 
 
