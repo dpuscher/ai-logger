@@ -47,8 +47,8 @@ jobs:
           
           # Try to get the next version from semantic-release (simplified dry-run)
           # We use --dry-run and ignore the push error to extract the version info
-          # Improved extraction by capturing output to a file first
-          npx semantic-release --dry-run --branches dev > sr_output.txt 2>&1 || true
+          # We use a local repository URL to force semantic-release to skip remote permission checks
+          npx semantic-release --dry-run --branches dev --plugins @semantic-release/commit-analyzer --repository-url . --extends /dev/null > sr_output.txt 2>&1 || true
           cat sr_output.txt
           RAW_VER=$(grep -oP 'The next release version is \K[0-9.a-zA-Z-]+' sr_output.txt | head -n 1)
           
