@@ -47,10 +47,12 @@ jobs:
           
           # Try to get the next version from semantic-release (simplified dry-run)
           # We use --dry-run and ignore the push error to extract the version info
-          # We use a local repository URL to force semantic-release to skip remote permission checks
-          npx semantic-release --dry-run --branches dev --plugins @semantic-release/commit-analyzer --repository-url . --extends /dev/null > sr_output.txt 2>&1 || true
+          # We use an inline config to only use the commit-analyzer plugin, bypassing other plugin token checks
+          # We must provide the correct branch configuration so it finds the existing prerelease tags
+          echo '{"branches": ["main", {"name": "dev", "prerelease": "rc"}]}' > sr-config.json
+          npx semantic-release --dry-run --extends ./sr-config.json --plugins @semantic-release/commit-analyzer --repository-url . > sr_output.txt 2>&1 || true
           cat sr_output.txt
-          RAW_VER=$(grep -oP 'The next release version is \K[0-9.a-zA-Z-]+' sr_output.txt | head -n 1)
+          RAW_VER=$(sed -n 's/.*The next release version is \([0-9.a-zA-Z-]*\).*/\1/p' sr_output.txt | head -n 1)
           
           if [ -z "$RAW_VER" ] || [ "$RAW_VER" = "null" ]; then RAW_VER="Calculating..."; fi
           
