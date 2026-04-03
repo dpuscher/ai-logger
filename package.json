@@ -1,6 +1,6 @@
 {
   "name": "ai-logger",
-  "version": "1.0.0-rc.7",
+  "version": "1.0.0-rc.8",
   "main": "dist/main.js",
   "type": "module",
   "scripts": {

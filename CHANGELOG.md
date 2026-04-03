@@ -1,3 +1,10 @@
+# [1.0.0-rc.8](https://github.com/dpuscher/ai-logger/compare/v1.0.0-rc.7...v1.0.0-rc.8) (2026-04-03)
+
+
+### Bug Fixes
+
+* **ci:** simplify PR sync version calculation ([a617b68](https://github.com/dpuscher/ai-logger/commit/a617b68c82b70bbc62f5861e0cdc37d8f1abb996))
+
 # [1.0.0-rc.7](https://github.com/dpuscher/ai-logger/compare/v1.0.0-rc.6...v1.0.0-rc.7) (2026-04-03)
 
 
