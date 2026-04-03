@@ -5,6 +5,8 @@
     "moduleResolution": "nodenext",
     "allowJs": false,
     "outDir": "dist",
+    "rootDir": "src",
+    "types": ["node"],
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
