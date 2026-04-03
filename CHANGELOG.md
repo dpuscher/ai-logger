@@ -1,3 +1,10 @@
+# [1.0.0-rc.2](https://github.com/dpuscher/ai-logger/compare/v1.0.0-rc.1...v1.0.0-rc.2) (2026-04-03)
+
+
+### Bug Fixes
+
+* **ci:** skip automated release commits in PR sync description ([3d48ad2](https://github.com/dpuscher/ai-logger/commit/3d48ad2cd188de1ec63ebf1ef69b4fac28a8b5e6))
+
 # 1.0.0-rc.1 (2026-04-03)
 
 
