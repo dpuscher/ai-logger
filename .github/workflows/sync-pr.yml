@@ -8,6 +8,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  id-token: write
 
 jobs:
   pull-request:
@@ -20,23 +21,25 @@ jobs:
 
       - name: Create or Update PR
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
         run: |
           # Fetch main to compare
-          git fetch origin main:main
+          git fetch origin main
           
           # Get list of commits between main and dev
-          COMMITS=$(git log main..dev --oneline --no-merges --pretty=format:"- %s (%h)")
+          # We include merges to be comprehensive, but exclude automated release commits
+          COMMITS=$(git log origin/main..dev --oneline --pretty=format:"- %s (%h)" | grep -v "chore(release):")
           
           # Try to get the next version from semantic-release (simplified dry-run)
           # We use --dry-run and ignore the push error to extract the version info
-          # Use sed for more portable version extraction
-          RAW_VER=$(npx semantic-release --dry-run --branches dev 2>&1 | sed -n 's/.*The next release version is \([0-9.]*[-a-zA-Z0-9.]*\).*/\1/p' | head -n 1 || echo "Calculating...")
+          # Improved regex to stop at first space or line end
+          RAW_VER=$(npx semantic-release --dry-run --branches dev 2>&1 | grep -oP 'The next release version is \K[0-9.a-zA-Z-]+' | head -n 1)
           
-          if [ -z "$RAW_VER" ]; then RAW_VER="Calculating..."; fi
+          if [ -z "$RAW_VER" ] || [ "$RAW_VER" = "null" ]; then RAW_VER="Calculating..."; fi
           
           # Strip prerelease suffix for "Target Production Version"
-          # e.g., 1.0.0-next.2 -> 1.0.0
+          # e.g., 1.0.0-rc.1 -> 1.0.0
           TARGET_VER=$(echo "$RAW_VER" | sed -E 's/-.*//')
           
           # Construct the PR Body
