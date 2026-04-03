@@ -1,3 +1,10 @@
+# [1.0.0-rc.3](https://github.com/dpuscher/ai-logger/compare/v1.0.0-rc.2...v1.0.0-rc.3) (2026-04-03)
+
+
+### Bug Fixes
+
+* **ci:** add node setup to PR sync for semantic-release ([bb223fe](https://github.com/dpuscher/ai-logger/commit/bb223fec3da8c8a38c0ebcc640359d80062ffb98))
+
 # [1.0.0-rc.2](https://github.com/dpuscher/ai-logger/compare/v1.0.0-rc.1...v1.0.0-rc.2) (2026-04-03)
 
 
