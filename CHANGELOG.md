@@ -1,3 +1,10 @@
+# [1.0.0-rc.7](https://github.com/dpuscher/ai-logger/compare/v1.0.0-rc.6...v1.0.0-rc.7) (2026-04-03)
+
+
+### Bug Fixes
+
+* **ci:** use portable sed for PR sync version extraction ([593164c](https://github.com/dpuscher/ai-logger/commit/593164c9d30d62dc69710c9d83dc7faaba4be77a))
+
 # [1.0.0-rc.6](https://github.com/dpuscher/ai-logger/compare/v1.0.0-rc.5...v1.0.0-rc.6) (2026-04-03)
 
 
