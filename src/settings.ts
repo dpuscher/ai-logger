@@ -54,7 +54,7 @@ export const runSettingsWizard = async (): Promise<AppConfig> => {
   const providerChoices = PROVIDERS.map(p => ({ name: p.name, value: p.name }));
 
   const { providerName } = await inquirer.prompt<{ providerName: string }>({
-    type: "list",
+    type: "select",
     name: "providerName",
     message: "Select AI provider:",
     choices: providerChoices,

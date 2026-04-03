@@ -424,7 +424,7 @@ Environment Variables:
     const { modeChoice } = await inquirer.prompt<{
       modeChoice: "manual" | "drafts" | "settings" | "exit";
     }>({
-      type: "list",
+      type: "select",
       name: "modeChoice",
       message: "What would you like to do?",
       choices: [
