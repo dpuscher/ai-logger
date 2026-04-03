@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dev
+  workflow_dispatch:
 
 # Needed for semantic-release to create releases, tags, and commit back changelog
 permissions:
