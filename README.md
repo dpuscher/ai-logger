@@ -96,3 +96,4 @@ Copy `.env.example` to `.env` to get started with env-based config.
 ## License
 
 ISC
+\n
