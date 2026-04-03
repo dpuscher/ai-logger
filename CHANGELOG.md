@@ -1,3 +1,10 @@
+# [1.0.0-rc.6](https://github.com/dpuscher/ai-logger/compare/v1.0.0-rc.5...v1.0.0-rc.6) (2026-04-03)
+
+
+### Bug Fixes
+
+* **ci:** use local repo URL for PR sync version calculation ([2f60afd](https://github.com/dpuscher/ai-logger/commit/2f60afd143f3f16a42dd5e6e83be6c8830d2c4c1))
+
 # [1.0.0-rc.5](https://github.com/dpuscher/ai-logger/compare/v1.0.0-rc.4...v1.0.0-rc.5) (2026-04-03)
 
 
