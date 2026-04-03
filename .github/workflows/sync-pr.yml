@@ -46,11 +46,9 @@ jobs:
           COMMITS=$(git log origin/main..dev --oneline --pretty=format:"- %s (%h)" | grep -v "chore(release):")
           
           # Try to get the next version from semantic-release (simplified dry-run)
-          # We use --dry-run and ignore the push error to extract the version info
-          # We use an inline config to only use the commit-analyzer plugin, bypassing other plugin token checks
-          # We must provide the correct branch configuration so it finds the existing prerelease tags
-          echo '{"branches": ["main", {"name": "dev", "prerelease": "rc"}]}' > sr-config.json
-          npx semantic-release --dry-run --extends ./sr-config.json --plugins @semantic-release/commit-analyzer --repository-url . > sr_output.txt 2>&1 || true
+          # We use --dry-run and only the commit-analyzer plugin
+          # This uses your existing .releaserc.json branch config but skips all token/permission checks
+          npx semantic-release --dry-run --plugins @semantic-release/commit-analyzer > sr_output.txt 2>&1 || true
           cat sr_output.txt
           RAW_VER=$(sed -n 's/.*The next release version is \([0-9.a-zA-Z-]*\).*/\1/p' sr_output.txt | head -n 1)
           
