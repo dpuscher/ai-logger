@@ -17,7 +17,7 @@ import {
   loadCookies,
   saveCookies,
 } from "./puppeteerSetup.js";
-import { runSettingsWizard } from "./settings.js";
+import { runSettingsMenu, runSettingsWizard } from "./settings.js";
 import { askUserForPersonalNotes, openInDefaultBrowser, promptUserForCacheCode } from "./utils.js";
 
 // Handles login if the current page is the sign-in page.
@@ -125,9 +125,7 @@ const navigateWithRetries = async (
 
 const runCachingSession = async (
   modeChoice: "manual" | "drafts",
-  aiConfig: AIConfig,
-  geocachingUsername: string,
-  geocachingPassword: string,
+  config: ReturnType<typeof getConfig>,
 ) => {
   const { browser, page } = await launchPuppeteer();
   await loadCookies(page);
@@ -139,7 +137,7 @@ const runCachingSession = async (
         console.log(chalk.gray("No code entered. Exiting."));
         break;
       }
-      await runSingleWorkflow(page, aiConfig, code, null, geocachingUsername, geocachingPassword);
+      await runSingleWorkflow(page, config, code, null);
       const { again } = await inquirer.prompt<{ again: boolean }>([
         {
           type: "confirm",
@@ -159,7 +157,7 @@ const runCachingSession = async (
     });
     if (page.url().includes("/account/signin")) {
       spinnerDraft.stop();
-      await loginIfNeeded(page, geocachingUsername, geocachingPassword);
+      await loginIfNeeded(page, config.geocachingUsername, config.geocachingPassword);
     } else {
       spinnerDraft.succeed(chalk.green("Drafts page loaded."));
     }
@@ -194,14 +192,7 @@ const runCachingSession = async (
           `\nCreating log for draft #${i + 1}: ${info.code} (${info.name})\nLink: https://coord.info/${info.code}\n`,
         ),
       );
-      await runSingleWorkflow(
-        page,
-        aiConfig,
-        info.code,
-        info.draftId,
-        geocachingUsername,
-        geocachingPassword,
-      );
+      await runSingleWorkflow(page, config, info.code, info.draftId);
 
       if (i < draftInfos.length - 1) {
         const { again } = await inquirer.prompt<{ again: boolean }>({
@@ -235,12 +226,18 @@ const displayLog = async (
 
 const runSingleWorkflow = async (
   page: Page,
-  aiConfig: AIConfig,
+  config: ReturnType<typeof getConfig>,
   code: string,
   draftId: string | null,
-  geocachingUsername: string,
-  geocachingPassword: string,
 ) => {
+  const geocachingUsername = config.geocachingUsername;
+  const geocachingPassword = config.geocachingPassword;
+  const aiConfig: AIConfig = {
+    apiBaseUrl: config.apiBaseUrl,
+    apiKey: config.apiKey,
+    model: config.model,
+  };
+
   const personalNotes = await askUserForPersonalNotes();
 
   const spinnerCache = ora(chalk.blue(`Loading geocache page for code: ${code}...`)).start();
@@ -298,7 +295,7 @@ const runSingleWorkflow = async (
     console.log();
   }
 
-  const logs = await collectFoundLogs(page, 500);
+  const logs = await collectFoundLogs(page, config.maxLogsToCollect);
   if (!logs.length) {
     console.log(chalk.yellow('No "Found" logs found. Nothing to do here...'));
     return;
@@ -454,23 +451,12 @@ Environment Variables:
     }
 
     if (modeChoice === "settings") {
-      await runSettingsWizard();
+      await runSettingsMenu();
       config = getConfig();
       continue;
     }
 
-    const aiConfig: AIConfig = {
-      apiBaseUrl: config.apiBaseUrl,
-      apiKey: config.apiKey,
-      model: config.model,
-    };
-
-    await runCachingSession(
-      modeChoice,
-      aiConfig,
-      config.geocachingUsername,
-      config.geocachingPassword,
-    );
+    await runCachingSession(modeChoice, config);
   }
 };
 

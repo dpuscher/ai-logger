@@ -32,5 +32,9 @@ export const getConfig = () => {
     model: process.env.MODEL ?? file.model ?? "",
     geocachingUsername: process.env.GEOCACHING_USERNAME ?? file.geocachingUsername ?? "",
     geocachingPassword: process.env.GEOCACHING_PASSWORD ?? file.geocachingPassword ?? "",
+    maxLogsToCollect: Number.parseInt(
+      process.env.MAX_LOGS_TO_COLLECT ?? file.maxLogsToCollect ?? "50",
+      10,
+    ),
   };
 };
