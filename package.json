@@ -47,14 +47,14 @@
     "inquirer": "^13.3.2",
     "openai": "^6.25.0",
     "ora": "^9.3.0",
-    "puppeteer": "24.40.0",
+    "puppeteer": "24.42.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-adblocker": "^2.13.6",
     "puppeteer-extra-plugin-block-resources": "^2.4.3",
     "puppeteer-extra-plugin-stealth": "^2.11.2"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.10",
+    "@biomejs/biome": "2.4.12",
     "@commitlint/cli": "^20.5.0",
     "@commitlint/config-conventional": "^20.5.0",
     "@lavamoat/allow-scripts": "^4.0.0",
